@@ -48,7 +48,7 @@ dotnet run --project .\tests\OtpVectors\OtpVectors.csproj -c Release
 dotnet build .\src\NoirAuth\NoirAuth.csproj -c Release
 ```
 
-GitHub Actions runs the RFC vectors and WinUI build. Pushing a `v*` tag publishes a portable ZIP, SHA-256 and GitHub build provenance.
+The test console checks 10 HOTP and 18 TOTP RFC vectors plus Google migration protobuf and encrypted/plain Aegis JSON samples. GitHub Actions also builds WinUI; pushing a `v*` tag publishes a portable ZIP, SHA-256 and GitHub build provenance.
 
 <details>
 <summary><b>Not included yet</b></summary>
