@@ -1,6 +1,6 @@
-using NoirAuth.Models;
+using Mono.Models;
 
-namespace NoirAuth.Services;
+namespace Mono.Services;
 
 public static class MigrationParser
 {

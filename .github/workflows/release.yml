@@ -16,18 +16,19 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-      - run: msbuild src/NoirAuth/NoirAuth.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:AppxGeneratePriEnabled=false /p:PublishDir=artifacts/publish/ /verbosity:minimal
+      - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:AppxGeneratePriEnabled=false /p:PublishDir=artifacts/publish/ /verbosity:minimal
       - name: Package portable app
         shell: pwsh
         run: |
-          Compress-Archive -Path src/NoirAuth/artifacts/publish/* -DestinationPath NoirAuth-win-x64.zip
-          (Get-FileHash NoirAuth-win-x64.zip -Algorithm SHA256).Hash.ToLower() | Set-Content NoirAuth-win-x64.zip.sha256
+          Compress-Archive -Path src/Mono/artifacts/publish/* -DestinationPath Mono-win-x64.zip
+          (Get-FileHash Mono-win-x64.zip -Algorithm SHA256).Hash.ToLower() | Set-Content Mono-win-x64.zip.sha256
       - uses: actions/attest-build-provenance@v2
         with:
-          subject-path: NoirAuth-win-x64.zip
+          subject-path: Mono-win-x64.zip
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          prerelease: true
           files: |
-            NoirAuth-win-x64.zip
-            NoirAuth-win-x64.zip.sha256
+            Mono-win-x64.zip
+            Mono-win-x64.zip.sha256

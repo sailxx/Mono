@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 
-namespace NoirAuth.Services;
+namespace Mono.Services;
 
 public sealed class UserSettings
 {

@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace NoirAuth;
+namespace Mono;
 
 public partial class App : Application
 {

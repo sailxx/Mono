@@ -4,11 +4,11 @@
 
 <br>
 
-<img src="assets/readme/hero.svg" width="100%" alt="Noir Authenticator — локальные коды двухфакторной аутентификации для Windows">
+<img src="assets/readme/hero.svg" width="100%" alt="Mono — локальные коды двухфакторной аутентификации для Windows">
 
-<a href="https://github.com/sailxx/NoirAuth/releases/latest/download/NoirAuth-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Скачать для Windows 11"></a>
+<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Скачать для Windows 11"></a>
 
-<sub><a href="#возможности">Возможности</a> · <a href="#защита-данных">Защита данных</a> · <a href="#установка">Установка</a> · <a href="#разработка">Разработка</a></sub>
+<sub><a href="#возможности">Возможности</a> · <a href="#защита-данных">Защита данных</a> · <a href="#установка">Установка</a></sub>
 
 </div>
 
@@ -16,7 +16,7 @@
 
 <img src="assets/readme/features.svg" width="100%" alt="Одноразовые коды, DPAPI, импорт аккаунтов и минималистичный интерфейс">
 
-**Noir Authenticator** — автономное приложение для Windows 11, которое хранит OTP-аккаунты на устройстве и генерирует коды TOTP/HOTP. Регистрация и облачная синхронизация не нужны.
+**Mono** — автономное приложение для Windows 11, которое хранит OTP-аккаунты на устройстве и генерирует коды TOTP/HOTP. Регистрация и облачная синхронизация не нужны.
 
 ## Возможности
 
@@ -34,37 +34,11 @@
 
 ## Установка
 
-1. Скачайте `NoirAuth-win-x64.zip` из [последнего релиза](https://github.com/sailxx/NoirAuth/releases/latest).
-2. Распакуйте архив в постоянную папку и запустите `NoirAuth.exe`.
+1. Скачайте `Mono-win-x64.zip` из [последнего релиза](https://github.com/sailxx/Mono/releases/latest).
+2. Распакуйте архив в постоянную папку и запустите `Mono.exe`.
 
 Архив содержит автономную сборку x64 и зависимости Windows App SDK. Рядом доступен SHA-256 файл для проверки целостности.
 
-## Проверка алгоритмов
-
-```powershell
-dotnet run --project .\tests\OtpVectors\OtpVectors.csproj -c Release
-```
-
-Набор проверяет 10 HOTP и 18 TOTP официальных векторов RFC 4226/6238, protobuf migration-пayload Google Authenticator и зашифрованный/незашифрованный формат Aegis JSON.
-
-## Разработка
-
-Нужны Windows 11, .NET 10 SDK и Visual Studio 2022 Build Tools с компонентами Windows App SDK.
-
-```powershell
-dotnet restore .\src\NoirAuth\NoirAuth.csproj
-dotnet build .\src\NoirAuth\NoirAuth.csproj -c Release
-```
-
-GitHub Actions запускает RFC-векторы и сборку WinUI. Публикация тега `v*` создаёт portable ZIP с EXE, SHA-256 и GitHub build provenance.
-
-<details>
-<summary><b>Что ещё не включено</b></summary>
-
-Сканирование QR веб-камерой, горячая клавиша, группы/категории, запуск с Windows и отдельная настройка темы/размера кодов пока не реализованы.
-
-</details>
-
 <br>
 
-<div align="center"><sub><b>NOIR AUTH</b> · Локально. Спокойно. Без облака.</sub></div>
+<div align="center"><sub><b>MONO</b> · Локально. Спокойно. Без облака.</sub></div>

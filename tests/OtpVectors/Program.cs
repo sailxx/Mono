@@ -1,5 +1,5 @@
-using NoirAuth.Models;
-using NoirAuth.Services;
+using Mono.Models;
+using Mono.Services;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
@@ -36,7 +36,7 @@ WriteBytes(entry, 2, System.Text.Encoding.UTF8.GetBytes("GitHub:sample@example.t
 WriteBytes(entry, 3, System.Text.Encoding.UTF8.GetBytes("GitHub"));
 WriteVarint(entry, 4, 1); WriteVarint(entry, 5, 1); WriteVarint(entry, 6, 1); WriteVarint(entry, 7, 0);
 using var payload = new MemoryStream(); WriteBytes(payload, 1, entry.ToArray());
-var migration = NoirAuth.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
+var migration = Mono.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
 if (migration.Count != 1 || migration[0].Issuer != "GitHub" || migration[0].Name != "sample@example.test" || migration[0].Type != "HOTP" || Otp.Generate(migration[0]) != "755224") throw new Exception("Google Authenticator migration protobuf import vector failed.");
 var aegisPlainDb = JsonSerializer.SerializeToUtf8Bytes(new { version = 3, entries = new[] { new { type = "totp", name = "sample", issuer = "Aegis", favorite = true, info = new { secret = hotpKey, algo = "SHA1", digits = 6, period = 30 } } }, groups = Array.Empty<object>() });
 var masterKey = RandomNumberGenerator.GetBytes(32); var passwordText = "test-password"; var passwordBytes = System.Text.Encoding.UTF8.GetBytes(passwordText); var salt = RandomNumberGenerator.GetBytes(32); var wrapNonce = RandomNumberGenerator.GetBytes(12); var wrapTag = new byte[16]; var wrappedKey = new byte[32];

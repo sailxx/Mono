@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using NoirAuth.Models;
+using Mono.Models;
 using Org.BouncyCastle.Crypto.Generators;
 
-namespace NoirAuth.Services;
+namespace Mono.Services;
 
 public static class AegisImporter
 {

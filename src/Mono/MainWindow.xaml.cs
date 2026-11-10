@@ -9,10 +9,10 @@ using WinRT.Interop;
 using ZXing;
 using ZXing.Common;
 using FormatException = System.FormatException;
-using NoirAuth.Models;
-using NoirAuth.Services;
+using Mono.Models;
+using Mono.Services;
 
-namespace NoirAuth;
+namespace Mono;
 
 public sealed partial class MainWindow : Window
 {
@@ -59,7 +59,7 @@ public sealed partial class MainWindow : Window
         var remaining = a.Type == "HOTP" ? "ручное обновление" : $"обновится через {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period} с";
         var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
         var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#777777") };
-        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = (FontFamily)Application.Current.Resources["MonoFont"], FontSize = 31, CharacterSpacing = 75, Foreground = error.Length > 0 ? Brush("#EF7777") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
+        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = (FontFamily)Application.Current.Resources["MonoFont"], FontSize = 31, CharacterSpacing = 75, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
         var metadata = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         metadata.Children.Add(title); metadata.Children.Add(name);
         var codeStack = new StackPanel { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Right };
@@ -69,7 +69,7 @@ public sealed partial class MainWindow : Window
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         var copy = new Button { Content = "Скопировать", Background = Brush("#171717"), Foreground = Brush("#CFCFCF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(10, 7, 10, 7), IsEnabled = error.Length == 0 };
         copy.Click += async (_, _) => { Touch(); try { var current = Otp.Generate(a); var p = new DataPackage(); p.SetText(current); Clipboard.SetContent(p); if (_settings.ClipboardClearSeconds > 0) _ = ClearClipboardAfter(current, _settings.ClipboardClearSeconds); if (a.Type == "HOTP") { a.Counter++; Save(); RenderAccounts(); } copy.Content = "Скопировано"; await Task.Delay(1100); copy.Content = "Скопировать"; } catch (Exception ex) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Код недоступен", Content = ex.Message, CloseButtonText = "ОК" }.ShowAsync(); } };
-        var pin = new Button { Content = a.Favorite ? "★" : "☆", Background = Brush("#111111"), Foreground = Brush("#B7F36B"), CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 6, 9, 6) };
+        var pin = new Button { Content = a.Favorite ? "★" : "☆", Background = Brush("#111111"), Foreground = Brush("#FFFFFF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 6, 9, 6) };
         pin.Click += (_, _) => { a.Favorite = !a.Favorite; Save(); RenderAccounts(); };
         var edit = new Button { Content = "···", Background = Brush("#111111"), Foreground = Brush("#999999"), CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 6, 9, 6) };
         edit.Click += (_, _) => { var menu = new MenuFlyout(); var editItem = new MenuFlyoutItem { Text = "Изменить" }; editItem.Click += async (_, _) => await EditAccount(a); var deleteItem = new MenuFlyoutItem { Text = "Удалить" }; deleteItem.Click += async (_, _) => { var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Удалить аккаунт?", Content = $"{a.Issuer} · {a.Name}", PrimaryButtonText = "Удалить", CloseButtonText = "Отмена", DefaultButton = ContentDialogButton.Close }; if (await dlg.ShowAsync() == ContentDialogResult.Primary) { _accounts.Remove(a); Save(); RenderAccounts(); } }; menu.Items.Add(editItem); menu.Items.Add(deleteItem); menu.ShowAt(edit); };
@@ -105,14 +105,14 @@ public sealed partial class MainWindow : Window
     private async void Import_Click(object sender, RoutedEventArgs e)
     {
         var text = new TextBox { PlaceholderText = "otpauth:// или otpauth-migration:// URI", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 86 };
-        var choose = new Button { Content = "Загрузить QR-изображение…", Background = Brush("#171B17"), Foreground = Brush("#E0E3DC"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
-        var pasteImage = new Button { Content = "Вставить QR-изображение из буфера", Background = Brush("#171B17"), Foreground = Brush("#E0E3DC"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
-        var backupFile = new Button { Content = "Выбрать файл резервной копии…", Background = Brush("#171B17"), Foreground = Brush("#E0E3DC"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
+        var choose = new Button { Content = "Загрузить QR-изображение…", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
+        var pasteImage = new Button { Content = "Вставить QR-изображение из буфера", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
+        var backupFile = new Button { Content = "Выбрать файл резервной копии…", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(10) };
         string? scanned = null;
         choose.Click += async (_, _) => { try { scanned = await ScanFile(); if (scanned != null) text.Text = scanned; } catch (Exception ex) { await ShowError("QR не прочитан", ex.Message); } };
         pasteImage.Click += async (_, _) => { try { scanned = await ScanClipboardImage(); if (scanned != null) text.Text = scanned; } catch (Exception ex) { await ShowError("QR не прочитан", ex.Message); } };
         backupFile.Click += async (_, _) => { try { text.Text = await ReadBackupFile() ?? text.Text; } catch (Exception ex) { await ShowError("Файл не открыт", ex.Message); } };
-        var content = new StackPanel { Spacing = 9 }; content.Children.Add(new TextBlock { Text = "Выберите QR-картинку, файл Aegis JSON или вставьте otpauth URI.", Foreground = Brush("#888F85"), TextWrapping = TextWrapping.Wrap }); content.Children.Add(choose); content.Children.Add(pasteImage); content.Children.Add(backupFile); content.Children.Add(text);
+        var content = new StackPanel { Spacing = 9 }; content.Children.Add(new TextBlock { Text = "Выберите QR-картинку, файл Aegis JSON или вставьте otpauth URI.", Foreground = Brush("#8B8B8B"), TextWrapping = TextWrapping.Wrap }); content.Children.Add(choose); content.Children.Add(pasteImage); content.Children.Add(backupFile); content.Children.Add(text);
         var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Импорт аккаунтов", Content = content, PrimaryButtonText = "Продолжить", CloseButtonText = "Отмена" };
         if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
         try
@@ -124,7 +124,7 @@ public sealed partial class MainWindow : Window
             else if (input.StartsWith("NOIRPASS1:")) { var password = await AskPassword("Пароль резервной копии"); if (password is null) return; var plain = DecryptBackup(Convert.FromBase64String(input[10..]), password); try { imported = System.Text.Json.JsonSerializer.Deserialize<List<Account>>(plain) ?? []; } finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plain); } }
             else if (input.StartsWith("NOIRAUTH1:")) { var raw = Convert.FromBase64String(input[10..]); var plain = System.Security.Cryptography.ProtectedData.Unprotect(raw, null, System.Security.Cryptography.DataProtectionScope.CurrentUser); try { imported = System.Text.Json.JsonSerializer.Deserialize<List<Account>>(plain) ?? []; } finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plain); System.Security.Cryptography.CryptographicOperations.ZeroMemory(raw); } }
             else if (input.Length > 0 && input.TrimStart().StartsWith('{')) imported = await ParseAegis(input);
-            else throw new FormatException("Вставьте otpauth URI, Google Authenticator migration URI или файл резервной копии Noir Auth.");
+            else throw new FormatException("Вставьте otpauth URI, Google Authenticator migration URI или файл резервной копии Mono.");
             await PreviewImport(imported);
         }
         catch (Exception ex) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Не удалось импортировать", Content = ex.Message, CloseButtonText = "ОК" }.ShowAsync(); }

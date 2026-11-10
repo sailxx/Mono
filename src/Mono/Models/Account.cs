@@ -1,4 +1,4 @@
-namespace NoirAuth.Models;
+namespace Mono.Models;
 
 public sealed class Account
 {

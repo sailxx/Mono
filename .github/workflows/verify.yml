@@ -23,4 +23,4 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: msbuild src/NoirAuth/NoirAuth.csproj /restore /p:Configuration=Release /verbosity:minimal
+      - run: msbuild src/Mono/Mono.csproj /restore /p:Configuration=Release /verbosity:minimal

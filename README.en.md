@@ -4,11 +4,11 @@
 
 <br>
 
-<img src="assets/readme/hero.svg" width="100%" alt="Noir Authenticator — local two-factor codes for Windows">
+<img src="assets/readme/hero.svg" width="100%" alt="Mono — local two-factor codes for Windows">
 
-<a href="https://github.com/sailxx/NoirAuth/releases/latest/download/NoirAuth-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Download for Windows 11"></a>
+<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Download for Windows 11"></a>
 
-<sub><a href="#features">Features</a> · <a href="#data-protection">Data protection</a> · <a href="#install">Install</a> · <a href="#development">Development</a></sub>
+<sub><a href="#features">Features</a> · <a href="#data-protection">Data protection</a> · <a href="#install">Install</a></sub>
 
 </div>
 
@@ -16,7 +16,7 @@
 
 <img src="assets/readme/features.svg" width="100%" alt="One-time codes, DPAPI, account import and a minimalist interface">
 
-**Noir Authenticator** is an offline Windows 11 app that keeps OTP accounts on your device and generates TOTP/HOTP codes. No sign-up or cloud sync.
+**Mono** is an offline Windows 11 app that keeps OTP accounts on your device and generates TOTP/HOTP codes. No sign-up or cloud sync.
 
 ## Features
 
@@ -34,27 +34,9 @@ Secrets live in the local profile, protected by Windows DPAPI for the current Wi
 
 ## Install
 
-1. Download `NoirAuth-win-x64.zip` from the [latest release](https://github.com/sailxx/NoirAuth/releases/latest).
-2. Extract it to a permanent folder and run `NoirAuth.exe`.
+1. Download `Mono-win-x64.zip` from the [latest release](https://github.com/sailxx/Mono/releases/latest).
+2. Extract it to a permanent folder and run `Mono.exe`.
 
 The archive contains a self-contained x64 build and Windows App SDK dependencies. A SHA-256 file is provided to verify integrity.
 
-## Development
-
-Requires Windows 11, .NET 10 SDK and Visual Studio 2022 Build Tools with Windows App SDK components.
-
-```powershell
-dotnet run --project .\tests\OtpVectors\OtpVectors.csproj -c Release
-dotnet build .\src\NoirAuth\NoirAuth.csproj -c Release
-```
-
-The test console checks 10 HOTP and 18 TOTP RFC vectors plus Google migration protobuf and encrypted/plain Aegis JSON samples. GitHub Actions also builds WinUI; pushing a `v*` tag publishes a portable ZIP, SHA-256 and GitHub build provenance.
-
-<details>
-<summary><b>Not included yet</b></summary>
-
-Camera-based QR scanning, global hotkeys, account groups/categories, Windows startup and theme/code-size preferences are not implemented yet.
-
-</details>
-
-<br><div align="center"><sub><b>NOIR AUTH</b> · Local. Quiet. No cloud.</sub></div>
+<br><div align="center"><sub><b>MONO</b> · Local. Quiet. No cloud.</sub></div>

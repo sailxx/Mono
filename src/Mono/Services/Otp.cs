@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using NoirAuth.Models;
+using Mono.Models;
 
-namespace NoirAuth.Services;
+namespace Mono.Services;
 
 public static class Otp
 {

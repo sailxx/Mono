@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using NoirAuth.Models;
+using Mono.Models;
 
-namespace NoirAuth.Services;
+namespace Mono.Services;
 
 public sealed class Vault
 {
