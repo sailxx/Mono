@@ -301,7 +301,7 @@ public sealed partial class MainWindow : Window
     private static SolidColorBrush Brush(string hex)
     {
         if (hex.Length == 7 && hex[0] == '#')
-            return new(new Microsoft.UI.Color { A = 255, R = Convert.ToByte(hex[1..3], 16), G = Convert.ToByte(hex[3..5], 16), B = Convert.ToByte(hex[5..7], 16) });
+            return new(Microsoft.UI.ColorHelper.FromArgb(255, Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16)));
         if (hex.Length == 9 && hex[0] == '#')
             return new(Microsoft.UI.ColorHelper.FromArgb(Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16), Convert.ToByte(hex[7..9], 16)));
         throw new FormatException($"Неверный формат цвета: {hex}");
