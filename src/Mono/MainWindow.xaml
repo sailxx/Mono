@@ -16,6 +16,6 @@
       <Button Grid.Column="1" Content="Резервная копия" Click="Backup_Click" Background="#111111" Foreground="#D0D0D0" CornerRadius="9" Padding="13,9"/>
     </Grid>
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"><StackPanel x:Name="AccountList" Spacing="8"/></ScrollViewer>
-    <Grid Grid.Row="3"><TextBlock Text="СЕКРЕТЫ ЗАЩИЩЕНЫ DPAPI · ЭТО УСТРОЙСТВО" FontSize="9" Foreground="#525252" CharacterSpacing="70"/><TextBlock x:Name="ClockText" HorizontalAlignment="Right" Text="RFC 6238 / RFC 4226" FontSize="10" Foreground="#585858" FontFamily="{StaticResource MonoFont}"/></Grid>
+    <Grid Grid.Row="3"><TextBlock Text="СЕКРЕТЫ ЗАЩИЩЕНЫ DPAPI · ЭТО УСТРОЙСТВО" FontSize="9" Foreground="#525252" CharacterSpacing="70"/><TextBlock x:Name="ClockText" HorizontalAlignment="Right" Text="RFC 6238 / RFC 4226" FontSize="10" Foreground="#585858" FontFamily="Cascadia Mono"/></Grid>
   </Grid>
 </Window>

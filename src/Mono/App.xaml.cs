@@ -20,6 +20,7 @@ public partial class App : Application
         try
         {
             InitializeComponent();
+            DebugSettings.XamlResourceReferenceFailed += (_, e) => Log($"XAML resource reference failed: {e.Message}");
             Log("App XAML initialized");
         }
         catch (Exception e)
