@@ -30,7 +30,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         SystemBackdrop = null;
         var windowHandle = WindowNative.GetWindowHandle(this);
-        var appWindow = AppWindow.GetFromWindowId(Win32Interop.GetWindowIdFromWindow(windowHandle));
+        var appWindow = AppWindow.GetFromWindowId(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle));
         var titleBar = appWindow.TitleBar;
         titleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
         titleBar.ForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
