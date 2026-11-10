@@ -10,10 +10,10 @@ public partial class App : Application
 
     public App()
     {
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => Report(e.ExceptionObject?.ToString() ?? "Unknown AppDomain exception");
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => Report(e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown AppDomain exception"));
         UnhandledException += (_, e) =>
         {
-            Report(e.Exception.ToString());
+            Report(e.Exception);
             e.Handled = true;
             ShowError(e.Exception.ToString());
         };
@@ -24,7 +24,7 @@ public partial class App : Application
         }
         catch (Exception e)
         {
-            Report(e.ToString());
+            Report(e);
             ShowError(e.ToString());
             throw;
         }
@@ -42,7 +42,7 @@ public partial class App : Application
         }
         catch (Exception e)
         {
-            Report(e.ToString());
+            Report(e);
             ShowError(e.ToString());
             throw;
         }
@@ -58,7 +58,18 @@ public partial class App : Application
         catch { }
     }
 
-    private static void Report(string text) => Log($"STARTUP ERROR: {text}");
+    private static void Report(Exception exception)
+    {
+        var details = new System.Text.StringBuilder(exception.ToString());
+        details.AppendLine($"HResult: 0x{exception.HResult:X8}");
+        if (exception.InnerException is not null) details.AppendLine($"Inner exception: {exception.InnerException}");
+        foreach (var property in exception.GetType().GetProperties())
+        {
+            try { details.AppendLine($"{property.Name}: {property.GetValue(exception)}"); }
+            catch { }
+        }
+        Log($"STARTUP ERROR: {details}");
+    }
 
     private static void ShowError(string text)
     {
