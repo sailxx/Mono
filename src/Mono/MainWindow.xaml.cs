@@ -298,7 +298,14 @@ public sealed partial class MainWindow : Window
         }
     }
     private void Save() => _vault.Save(_accounts);
-    private static SolidColorBrush Brush(string hex) => new(Microsoft.UI.ColorHelper.FromArgb(Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16), Convert.ToByte(hex[7..9], 16)));
+    private static SolidColorBrush Brush(string hex)
+    {
+        if (hex.Length == 7 && hex[0] == '#')
+            return new(new Microsoft.UI.Color { A = 255, R = Convert.ToByte(hex[1..3], 16), G = Convert.ToByte(hex[3..5], 16), B = Convert.ToByte(hex[5..7], 16) });
+        if (hex.Length == 9 && hex[0] == '#')
+            return new(Microsoft.UI.ColorHelper.FromArgb(Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16), Convert.ToByte(hex[7..9], 16)));
+        throw new FormatException($"Неверный формат цвета: {hex}");
+    }
     private static TextBox Input(string placeholder, string value) => new() { PlaceholderText = placeholder, Text = value, Background = Brush("#111111"), BorderThickness = new Thickness(0), CornerRadius = new CornerRadius(7), Padding = new Thickness(10, 8, 10, 8) };
     private static TextBlock Label(string text) => new() { Text = text, FontSize = 11, Foreground = Brush("#777777") };
     private async Task ShowError(string title, string message) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = title, Content = message, CloseButtonText = "ОК" }.ShowAsync(); }
