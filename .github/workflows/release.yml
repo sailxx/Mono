@@ -20,6 +20,9 @@ jobs:
       - name: Package portable app
         shell: pwsh
         run: |
+          $xaml = @(Get-ChildItem src/Mono/bin/Release -Filter *.xbf -File -Recurse)
+          if ($xaml.Count -eq 0) { throw 'No compiled WinUI XAML resources were produced.' }
+          Copy-Item -Path $xaml.FullName -Destination src/Mono/artifacts/publish/ -Force
           Compress-Archive -Path src/Mono/artifacts/publish/* -DestinationPath Mono-win-x64.zip
           (Get-FileHash Mono-win-x64.zip -Algorithm SHA256).Hash.ToLower() | Set-Content Mono-win-x64.zip.sha256
       - uses: actions/attest-build-provenance@v2
