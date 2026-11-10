@@ -16,7 +16,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-      - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:AppxGeneratePriEnabled=false /p:PublishDir=artifacts/publish/ /verbosity:minimal
+      - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:PublishDir=artifacts/publish/ /verbosity:minimal
       - name: Package portable app
         shell: pwsh
         run: |
