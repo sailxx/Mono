@@ -59,7 +59,7 @@ public sealed partial class MainWindow : Window
         var remaining = a.Type == "HOTP" ? "ручное обновление" : $"обновится через {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period} с";
         var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
         var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#777777") };
-        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = (FontFamily)Application.Current.Resources["MonoFont"], FontSize = 31, CharacterSpacing = 75, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
+        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("Cascadia Mono"), FontSize = 31, CharacterSpacing = 75, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
         var metadata = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         metadata.Children.Add(title); metadata.Children.Add(name);
         var codeStack = new StackPanel { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Right };
