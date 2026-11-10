@@ -6,7 +6,7 @@
 
 <img src="assets/readme/hero.svg" width="100%" alt="Mono — local two-factor codes for Windows">
 
-<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Download for Windows 11"></a>
+<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-Setup.exe"><img src="assets/readme/download.svg" height="48" alt="Download for Windows 11"></a>
 
 <sub><a href="#features">Features</a> · <a href="#data-protection">Data protection</a> · <a href="#install">Install</a></sub>
 
@@ -34,9 +34,9 @@ Secrets live in the local profile, protected by Windows DPAPI for the current Wi
 
 ## Install
 
-1. Download `Mono-win-x64.zip` from the [latest release](https://github.com/sailxx/Mono/releases/latest).
-2. Extract it to a permanent folder and run `Mono.exe`.
+1. Download and run `Mono-Setup.exe` from the [latest release](https://github.com/sailxx/Mono/releases/latest).
+2. The installer creates Start menu and desktop shortcuts. Running it again updates the installed version; uninstall Mono from Windows Settings → Apps.
 
-The archive contains a self-contained x64 build and Windows App SDK dependencies. A SHA-256 file is provided to verify integrity.
+The installer includes the self-contained x64 app, Windows App SDK dependencies, and the bundled JetBrains Mono font. Account data stays outside the app folder and is preserved during updates and uninstall.
 
 <br><div align="center"><sub><b>MONO</b> · Local. Quiet. No cloud.</sub></div>

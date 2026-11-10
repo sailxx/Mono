@@ -7,6 +7,22 @@ using Org.BouncyCastle.Crypto.Generators;
 var hotpKey = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 string[] hotp = ["755224", "287082", "359152", "969429", "338314", "254676", "287922", "162583", "399871", "520489"];
 for (var i = 0; i < hotp.Length; i++) Check("HOTP", hotp[i], Otp.Generate(new Account { Secret = hotpKey, Type = "HOTP", Counter = i }));
+Check("HOTP explicit zero counter", "755224", Otp.Generate(new Account { Secret = hotpKey, Type = "HOTP", Counter = 9 }, hotpCounter: 0));
+Check("Base32 padded secret", "f", System.Text.Encoding.ASCII.GetString(Otp.DecodeBase32("MY======")));
+Check("Base32 unpadded secret", "f", System.Text.Encoding.ASCII.GetString(Otp.DecodeBase32(" M Y\n ")));
+Expect<FormatException>("Base32 invalid length", () => Otp.DecodeBase32("A"));
+Expect<FormatException>("Base32 invalid padding", () => Otp.DecodeBase32("MY====="));
+Expect<FormatException>("Base32 non-zero trailing bits", () => Otp.DecodeBase32("MZ======"));
+Expect<FormatException>("TOTP zero period", () => Otp.Generate(new Account { Secret = hotpKey, Period = 0 }, 60));
+Expect<FormatException>("Unsupported OTP algorithm", () => Otp.Generate(new Account { Secret = hotpKey, Algorithm = "MD5" }, 60));
+Expect<FormatException>("Unsupported OTP digits", () => Otp.Generate(new Account { Secret = hotpKey, Digits = 7 }, 60));
+Expect<FormatException>("Negative HOTP counter", () => Otp.Generate(new Account { Secret = hotpKey, Type = "HOTP", Counter = -1 }));
+var totpUri = OtpUriParser.Parse("otpauth://totp/GitHub:sample%40example.test?secret=" + hotpKey + "&issuer=GitHub&algorithm=SHA1&digits=6&period=30");
+if (totpUri.Type != "TOTP" || totpUri.Issuer != "GitHub" || totpUri.Name != "sample@example.test" || Otp.Generate(totpUri, 59) != "287082") throw new Exception("otpauth TOTP URI parsing failed.");
+var hotpUri = OtpUriParser.Parse("otpauth://hotp/GitHub:sample?secret=" + hotpKey + "&counter=5");
+if (hotpUri.Counter != 5 || Otp.Generate(hotpUri) != "254676") throw new Exception("otpauth HOTP URI counter parsing failed.");
+Expect<FormatException>("HOTP URI missing counter", () => OtpUriParser.Parse("otpauth://hotp/GitHub:sample?secret=" + hotpKey));
+Expect<FormatException>("otpauth unsupported digits", () => OtpUriParser.Parse("otpauth://totp/GitHub:sample?secret=" + hotpKey + "&digits=7"));
 
 var vectors = new (string Secret, string Algorithm, long Time, string Expected)[]
 {
@@ -38,6 +54,8 @@ WriteVarint(entry, 4, 1); WriteVarint(entry, 5, 1); WriteVarint(entry, 6, 1); Wr
 using var payload = new MemoryStream(); WriteBytes(payload, 1, entry.ToArray());
 var migration = Mono.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
 if (migration.Count != 1 || migration[0].Issuer != "GitHub" || migration[0].Name != "sample@example.test" || migration[0].Type != "HOTP" || Otp.Generate(migration[0]) != "755224") throw new Exception("Google Authenticator migration protobuf import vector failed.");
+var malformedVarint = Enumerable.Repeat((byte)0xFF, 9).Append((byte)0x02).ToArray();
+Expect<FormatException>("Migration protobuf varint overflow", () => MigrationParser.ParseUri("otpauth-migration://offline?data=" + Convert.ToBase64String(malformedVarint)));
 var aegisPlainDb = JsonSerializer.SerializeToUtf8Bytes(new { version = 3, entries = new[] { new { type = "totp", name = "sample", issuer = "Aegis", favorite = true, info = new { secret = hotpKey, algo = "SHA1", digits = 6, period = 30 } } }, groups = Array.Empty<object>() });
 var masterKey = RandomNumberGenerator.GetBytes(32); var passwordText = "test-password"; var passwordBytes = System.Text.Encoding.UTF8.GetBytes(passwordText); var salt = RandomNumberGenerator.GetBytes(32); var wrapNonce = RandomNumberGenerator.GetBytes(12); var wrapTag = new byte[16]; var wrappedKey = new byte[32];
 var derived = SCrypt.Generate(passwordBytes, salt, 32768, 8, 1, 32);
@@ -50,11 +68,46 @@ if (aegisImported.Count != 1 || aegisImported[0].Issuer != "Aegis" || !aegisImpo
 try { _ = AegisImporter.Parse(aegisFixture, "wrong-password"); throw new Exception("Encrypted Aegis importer accepted a wrong password."); } catch (FormatException) { }
 var plaintextAegis = JsonSerializer.Serialize(new { version = 1, header = new { slots = (object?)null, @params = (object?)null }, db = JsonSerializer.Deserialize<JsonElement>(aegisPlainDb) });
 if (AegisImporter.Parse(plaintextAegis).Count != 1) throw new Exception("Plaintext Aegis JSON import vector failed.");
-Console.WriteLine($"Passed {hotp.Length} HOTP, {vectors.Length} TOTP RFC vectors, Google migration protobuf, and encrypted/plaintext Aegis JSON vectors.");
+
+var storageTestDirectory = Path.Combine(Path.GetTempPath(), "Mono-storage-test-" + Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(storageTestDirectory);
+try
+{
+    var vaultPath = Path.Combine(storageTestDirectory, "vault.bin");
+    var vault = new Vault(vaultPath);
+    var sampleAccount = new Account { Issuer = "Example", Name = "user", Secret = hotpKey };
+    vault.Save([sampleAccount]);
+    sampleAccount.Name = "user-updated";
+    vault.Save([sampleAccount]);
+    var loadedAccount = vault.Load().Single();
+    if (loadedAccount.Issuer != sampleAccount.Issuer || loadedAccount.Name != sampleAccount.Name || loadedAccount.Secret != sampleAccount.Secret || File.Exists(vaultPath + ".tmp")) throw new Exception("DPAPI vault round-trip or atomic replacement failed.");
+    File.WriteAllBytes(vaultPath, [1, 2, 3]);
+    Expect<InvalidOperationException>("Vault rejects corrupted DPAPI data", () => vault.Load());
+
+    var settingsPath = Path.Combine(storageTestDirectory, "settings.bin");
+    var settings = new UserSettings(settingsPath) { HideCodes = false, ClipboardClearSeconds = 15, AutoLockMinutes = 1 };
+    settings.SetPassword("sample-password");
+    settings.ClipboardClearSeconds = 30;
+    settings.Save();
+    var loadedSettings = UserSettings.Load(settingsPath);
+    if (loadedSettings.HideCodes || loadedSettings.ClipboardClearSeconds != 30 || loadedSettings.AutoLockMinutes != 1 || !loadedSettings.VerifyPassword("sample-password") || loadedSettings.VerifyPassword("wrong-password") || File.Exists(settingsPath + ".tmp"))
+        throw new Exception("DPAPI settings/password round-trip failed.");
+    File.WriteAllBytes(settingsPath, [1, 2, 3]);
+    Expect<InvalidOperationException>("Settings reject corrupted DPAPI data", () => UserSettings.Load(settingsPath));
+}
+finally { Directory.Delete(storageTestDirectory, recursive: true); }
+Console.WriteLine($"Passed {hotp.Length} HOTP, {vectors.Length} TOTP RFC vectors, OTP URI validation, malformed-input guards, Google migration protobuf, and encrypted/plaintext Aegis JSON vectors.");
 
 static void Check(string name, string expected, string actual)
 {
     if (expected != actual) throw new Exception($"{name}: expected {expected}, got {actual}");
+}
+
+static void Expect<TException>(string name, Action action) where TException : Exception
+{
+    try { action(); }
+    catch (TException) { return; }
+    throw new Exception($"{name}: expected {typeof(TException).Name}.");
 }
 
 static void WriteBytes(Stream stream, int field, byte[] data) { WriteRawVarint(stream, (ulong)((field << 3) | 2)); WriteRawVarint(stream, (ulong)data.Length); stream.Write(data); }

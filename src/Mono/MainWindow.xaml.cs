@@ -20,9 +20,10 @@ public sealed partial class MainWindow : Window
 {
     private readonly Vault _vault = new();
     private UserSettings _settings = UserSettings.Load();
-    private List<Account> _accounts;
+    private List<Account> _accounts = [];
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly Dictionary<Guid, (TextBlock Code, TextBlock Time)> _cardLabels = [];
+    private readonly Dictionary<Guid, long> _codeSteps = [];
     private DateTime _lastActivity = DateTime.Now;
     private bool _locked;
     public MainWindow()
@@ -32,18 +33,36 @@ public sealed partial class MainWindow : Window
         var windowHandle = WindowNative.GetWindowHandle(this);
         var appWindow = AppWindow.GetFromWindowId(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle));
         var titleBar = appWindow.TitleBar;
-        titleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-        titleBar.ForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
-        titleBar.ButtonBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-        titleBar.ButtonForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
-        titleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 38, 38, 38);
-        titleBar.ButtonHoverForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255);
-        titleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 65, 65, 65);
+        if (AppWindowTitleBar.IsCustomizationSupported())
+        {
+            titleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
+            titleBar.ForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
+            titleBar.InactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
+            titleBar.InactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 170, 170, 170);
+            titleBar.ButtonBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
+            titleBar.ButtonForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
+            titleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 38, 38, 38);
+            titleBar.ButtonHoverForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255);
+            titleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 65, 65, 65);
+            titleBar.ButtonPressedForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255);
+            titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
+            titleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 170, 170, 170);
+        }
         appWindow.Resize(new SizeInt32(620, 640));
-        _accounts = [];
+        var version = typeof(App).Assembly.GetName().Version;
+        VersionText.Text = version is null ? "v0.3.0" : $"v{version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}";
         ShowCodesButton.Content = _settings.HideCodes ? "Показать коды" : "Скрыть коды";
         if (Content is UIElement root) { root.PointerPressed += (_, _) => Touch(); root.KeyDown += (_, _) => Touch(); }
-        _timer.Tick += async (_, _) => { ClockText.Text = DateTime.Now.ToString("HH:mm:ss"); if (!_locked && _settings.HasPassword && _settings.AutoLockMinutes > 0 && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(_settings.AutoLockMinutes)) await LockAndUnlock(); else UpdateCodes(); };
+        _timer.Tick += async (_, _) =>
+        {
+            try
+            {
+                ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
+                if (!_locked && _settings.HasPassword && _settings.AutoLockMinutes > 0 && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(_settings.AutoLockMinutes)) await LockAndUnlock();
+                else UpdateCodes();
+            }
+            catch (Exception ex) { LogStartup($"Timer action failed: {ex}"); }
+        };
         _timer.Start();
         ((FrameworkElement)Content).Loaded += async (_, _) =>
         {
@@ -85,7 +104,7 @@ public sealed partial class MainWindow : Window
         var q = SearchBox.Text.Trim();
         var visible = _accounts.Where(a => q.Length == 0 || a.Issuer.Contains(q, StringComparison.OrdinalIgnoreCase) || a.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(a => a.Favorite).ThenBy(a => a.Issuer).ThenBy(a => a.Name).ToList();
-        AccountList.Children.Clear(); _cardLabels.Clear();
+        AccountList.Children.Clear(); _cardLabels.Clear(); _codeSteps.Clear();
         CountText.Text = $"{_accounts.Count} АККАУНТОВ · DPAPI";
         foreach (var account in visible) AccountList.Children.Add(BuildCard(account));
         if (visible.Count == 0)
@@ -101,7 +120,8 @@ public sealed partial class MainWindow : Window
     {
         string code = "••••••"; string error = "";
         try { code = Otp.Generate(a); } catch (Exception e) { error = e.Message; }
-        var remaining = a.Type == "HOTP" ? "ручное обновление" : $"обновится через {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period} с";
+        var isHotp = string.Equals(a.Type, "HOTP", StringComparison.OrdinalIgnoreCase);
+        var remaining = isHotp ? "ручное обновление" : a.Period > 0 ? $"обновится через {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period} с" : "некорректный период TOTP";
         var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
         var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#777777") };
         var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"), FontSize = 25, CharacterSpacing = 50, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
@@ -111,9 +131,28 @@ public sealed partial class MainWindow : Window
         var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 9, Foreground = Brush("#727272") };
         codeStack.Children.Add(codeBlock); codeStack.Children.Add(timeBlock);
         _cardLabels[a.Id] = (codeBlock, timeBlock);
+        _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() / a.Period : long.MinValue;
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         var copy = new Button { Content = "Копировать", Background = Brush("#171717"), Foreground = Brush("#CFCFCF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 6, 9, 6), IsEnabled = error.Length == 0, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono") };
-        copy.Click += async (_, _) => { Touch(); try { var current = Otp.Generate(a); var p = new DataPackage(); p.SetText(current); Clipboard.SetContent(p); if (_settings.ClipboardClearSeconds > 0) _ = ClearClipboardAfter(current, _settings.ClipboardClearSeconds); if (a.Type == "HOTP") { a.Counter++; Save(); RenderAccounts(); } copy.Content = "Скопировано"; await Task.Delay(1100); copy.Content = "Скопировать"; } catch (Exception ex) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Код недоступен", Content = ex.Message, CloseButtonText = "ОК" }.ShowAsync(); } };
+        copy.Click += async (_, _) =>
+        {
+            Touch();
+            try
+            {
+                var current = Otp.Generate(a);
+                if (isHotp)
+                {
+                    if (a.Counter == long.MaxValue) throw new InvalidOperationException("Счётчик HOTP достиг максимального значения.");
+                    a.Counter++;
+                    try { Save(); } catch { a.Counter--; throw; }
+                    RenderAccounts();
+                }
+                var package = new DataPackage(); package.SetText(current); Clipboard.SetContent(package);
+                if (_settings.ClipboardClearSeconds > 0) _ = ClearClipboardAfter(current, _settings.ClipboardClearSeconds);
+                copy.Content = "Скопировано"; await Task.Delay(1100); copy.Content = "Копировать";
+            }
+            catch (Exception ex) { await ShowError("Код не скопирован", ex.Message); }
+        };
         var pin = new Button { Content = a.Favorite ? "★" : "☆", Background = Brush("#111111"), Foreground = Brush("#FFFFFF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(8, 5, 8, 5) };
         pin.Click += (_, _) => { a.Favorite = !a.Favorite; Save(); RenderAccounts(); };
         var edit = new Button { Content = "···", Background = Brush("#111111"), Foreground = Brush("#999999"), CornerRadius = new CornerRadius(7), Padding = new Thickness(8, 5, 8, 5) };
@@ -168,8 +207,9 @@ public sealed partial class MainWindow : Window
         try
         {
             var input = text.Text.Trim();
+            if (input.Length > 20_000_000) throw new FormatException("Файл импорта слишком большой (лимит 20 МБ).");
             List<Account> imported;
-            if (input.StartsWith("otpauth://", StringComparison.OrdinalIgnoreCase)) imported = [ParseOtpUri(input)];
+            if (input.StartsWith("otpauth://", StringComparison.OrdinalIgnoreCase)) imported = [OtpUriParser.Parse(input)];
             else if (input.StartsWith("otpauth-migration://", StringComparison.OrdinalIgnoreCase)) imported = MigrationParser.ParseUri(input);
             else if (input.StartsWith("NOIRPASS1:")) { var password = await AskPassword("Пароль резервной копии"); if (password is null) return; var plain = DecryptBackup(Convert.FromBase64String(input[10..]), password); try { imported = System.Text.Json.JsonSerializer.Deserialize<List<Account>>(plain) ?? []; } finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plain); } }
             else if (input.StartsWith("NOIRAUTH1:")) { var raw = Convert.FromBase64String(input[10..]); var plain = System.Security.Cryptography.ProtectedData.Unprotect(raw, null, System.Security.Cryptography.DataProtectionScope.CurrentUser); try { imported = System.Text.Json.JsonSerializer.Deserialize<List<Account>>(plain) ?? []; } finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plain); System.Security.Cryptography.CryptographicOperations.ZeroMemory(raw); } }
@@ -184,13 +224,17 @@ public sealed partial class MainWindow : Window
         var picker = new FileOpenPicker(); foreach (var extension in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff" }) picker.FileTypeFilter.Add(extension);
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         var file = await picker.PickSingleFileAsync(); if (file == null) return null;
+        if ((await file.GetBasicPropertiesAsync()).Size > 25 * 1024 * 1024) throw new FormatException("Изображение больше допустимого размера 25 МБ.");
         using var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read); return await DecodeImage(stream);
     }
     private async Task<string?> ReadBackupFile()
     {
         var picker = new FileOpenPicker(); picker.FileTypeFilter.Add(".json"); picker.FileTypeFilter.Add(".txt");
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-        var file = await picker.PickSingleFileAsync(); return file is null ? null : await Windows.Storage.FileIO.ReadTextAsync(file);
+        var file = await picker.PickSingleFileAsync();
+        if (file is null) return null;
+        if ((await file.GetBasicPropertiesAsync()).Size > 20 * 1024 * 1024) throw new FormatException("Файл импорта больше допустимого размера 20 МБ.");
+        return await Windows.Storage.FileIO.ReadTextAsync(file);
     }
     private static async Task<string?> ScanClipboardImage()
     {
@@ -199,14 +243,28 @@ public sealed partial class MainWindow : Window
     }
     private static async Task<string?> DecodeImage(IRandomAccessStream stream)
     {
-        var decoder = await BitmapDecoder.CreateAsync(stream); var pixels = await decoder.GetPixelDataAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, new BitmapTransform(), ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage); var bytes = pixels.DetachPixelData();
-        var reader = new BarcodeReaderGeneric { AutoRotate = true, Options = new DecodingOptions { TryHarder = true, PossibleFormats = [BarcodeFormat.QR_CODE] } };
-        var result = reader.Decode(bytes, (int)decoder.PixelWidth, (int)decoder.PixelHeight, RGBLuminanceSource.BitmapFormat.BGRA32) ?? throw new FormatException("На изображении не найден QR-код. Попробуйте выбрать более чёткую картинку.");
-        return result.Text;
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        if (decoder.PixelWidth == 0 || decoder.PixelHeight == 0 || (ulong)decoder.PixelWidth * decoder.PixelHeight > 16_000_000)
+            throw new FormatException("Изображение QR слишком большое для безопасной обработки (максимум 16 мегапикселей).");
+        var pixels = await decoder.GetPixelDataAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, new BitmapTransform(), ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage); var bytes = pixels.DetachPixelData();
+        try
+        {
+            var reader = new BarcodeReaderGeneric { AutoRotate = true, Options = new DecodingOptions { TryHarder = true, PossibleFormats = [BarcodeFormat.QR_CODE] } };
+            var result = reader.Decode(bytes, (int)decoder.PixelWidth, (int)decoder.PixelHeight, RGBLuminanceSource.BitmapFormat.BGRA32) ?? throw new FormatException("На изображении не найден QR-код. Попробуйте выбрать более чёткую картинку.");
+            return result.Text;
+        }
+        finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
     }
     private async Task PreviewImport(List<Account> imported)
     {
         if (imported.Count == 0) throw new FormatException("Формат не содержит аккаунтов.");
+        if (imported.Count > 500) throw new FormatException("В одном импорте можно добавить не более 500 аккаунтов.");
+        foreach (var account in imported)
+        {
+            if (account is null) throw new FormatException("Импорт содержит пустую запись аккаунта.");
+            Otp.Validate(account);
+            account.Id = Guid.NewGuid();
+        }
         var rows = new StackPanel { Spacing = 6, MaxHeight = 360 };
         var choices = new List<(Account Account, CheckBox Check)>();
         foreach (var account in imported)
@@ -256,11 +314,6 @@ public sealed partial class MainWindow : Window
         catch (System.Security.Cryptography.CryptographicException) { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plain); throw new FormatException("Пароль неверен или резервная копия повреждена."); }
         finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(key); System.Security.Cryptography.CryptographicOperations.ZeroMemory(blob); }
     }
-    private static Account ParseOtpUri(string uri)
-    {
-        var u = new Uri(uri); var label = Uri.UnescapeDataString(u.AbsolutePath.TrimStart('/')); var parts = label.Split(':', 2); var query = System.Web.HttpUtility.ParseQueryString(u.Query);
-        return new Account { Type = u.Host.Equals("hotp", StringComparison.OrdinalIgnoreCase) ? "HOTP" : "TOTP", Issuer = query["issuer"] ?? (parts.Length > 1 ? parts[0] : "Account"), Name = parts.Length > 1 ? parts[1] : parts[0], Secret = query["secret"] ?? throw new FormatException("В URI отсутствует secret."), Algorithm = (query["algorithm"] ?? "SHA1").ToUpperInvariant(), Digits = int.TryParse(query["digits"], out var d) ? d : 6, Period = int.TryParse(query["period"], out var p) ? p : 30 };
-    }
     private void AddIfNew(Account account)
     {
         var key = Otp.DecodeBase32(account.Secret);
@@ -271,13 +324,26 @@ public sealed partial class MainWindow : Window
     private void UpdateCodes()
     {
         var seconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var visibilityChanged = _renderedHideCodes != _settings.HideCodes;
         foreach (var account in _accounts)
         {
             if (!_cardLabels.TryGetValue(account.Id, out var labels)) continue;
-            try { labels.Code.Text = _settings.HideCodes ? new string('•', account.Digits) : Otp.Generate(account); labels.Time.Text = account.Type == "HOTP" ? "ручное обновление" : $"обновится через {account.Period - seconds % account.Period} с"; }
+            try
+            {
+                var isHotp = string.Equals(account.Type, "HOTP", StringComparison.OrdinalIgnoreCase);
+                var step = isHotp ? account.Counter : account.Period > 0 ? seconds / account.Period : long.MinValue;
+                if (visibilityChanged || !_codeSteps.TryGetValue(account.Id, out var previousStep) || step != previousStep)
+                {
+                    labels.Code.Text = _settings.HideCodes ? new string('•', account.Digits is 6 or 8 ? account.Digits : 6) : Otp.Generate(account);
+                    _codeSteps[account.Id] = step;
+                }
+                labels.Time.Text = isHotp ? "ручное обновление" : account.Period > 0 ? $"обновится через {account.Period - seconds % account.Period} с" : "некорректный период TOTP";
+            }
             catch (Exception e) { labels.Code.Text = "••••••"; labels.Time.Text = e.Message; }
         }
+        _renderedHideCodes = _settings.HideCodes;
     }
+    private bool _renderedHideCodes = true;
     private void ShowCodes_Click(object sender, RoutedEventArgs e) { _settings.HideCodes = !_settings.HideCodes; _settings.Save(); ShowCodesButton.Content = _settings.HideCodes ? "Показать коды" : "Скрыть коды"; UpdateCodes(); }
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
@@ -289,8 +355,13 @@ public sealed partial class MainWindow : Window
         var form = new StackPanel { Spacing = 12 }; form.Children.Add(hide); form.Children.Add(Label("Очистка буфера после копирования")); form.Children.Add(clear); form.Children.Add(Label("Автоблокировка при бездействии")); form.Children.Add(idle); form.Children.Add(Label("Мастер-пароль защищает доступ к окну приложения")); form.Children.Add(pass); form.Children.Add(clearPass);
         var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Настройки", Content = form, PrimaryButtonText = "Сохранить", CloseButtonText = "Отмена" };
         if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+        if (clearPass.IsChecked != true && !string.IsNullOrWhiteSpace(pass.Password) && pass.Password.Length < 8)
+        {
+            await ShowError("Слишком короткий пароль", "Мастер-пароль должен содержать не менее 8 символов.");
+            return;
+        }
         _settings.HideCodes = hide.IsChecked == true; _settings.ClipboardClearSeconds = (string)clear.SelectedItem! switch { "15 секунд" => 15, "30 секунд" => 30, "60 секунд" => 60, _ => 0 }; _settings.AutoLockMinutes = (string)idle.SelectedItem! switch { "1 минута" => 1, "5 минут" => 5, "10 минут" => 10, "15 минут" => 15, _ => 0 };
-        if (clearPass.IsChecked == true) { _settings.PasswordSalt = null; _settings.PasswordHash = null; } else if (!string.IsNullOrWhiteSpace(pass.Password)) { if (pass.Password.Length < 8) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Слишком короткий пароль", Content = "Мастер-пароль должен содержать не менее 8 символов.", CloseButtonText = "ОК" }.ShowAsync(); return; } _settings.SetPassword(pass.Password); }
+        if (clearPass.IsChecked == true) { _settings.PasswordSalt = null; _settings.PasswordHash = null; } else if (!string.IsNullOrWhiteSpace(pass.Password)) _settings.SetPassword(pass.Password);
         _settings.Save(); _lastActivity = DateTime.Now; ShowCodesButton.Content = _settings.HideCodes ? "Показать коды" : "Скрыть коды"; RenderAccounts();
     }
     private void Touch() => _lastActivity = DateTime.Now;

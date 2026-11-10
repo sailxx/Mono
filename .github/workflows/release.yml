@@ -17,21 +17,24 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
       - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:PublishDir=artifacts/publish/ /verbosity:minimal
-      - name: Package portable app
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress
+      - name: Build installer
         shell: pwsh
         run: |
           $xaml = @(Get-ChildItem src/Mono/bin/Release -Filter *.xbf -File -Recurse)
           if ($xaml.Count -eq 0) { throw 'No compiled WinUI XAML resources were produced.' }
           Copy-Item -Path $xaml.FullName -Destination src/Mono/artifacts/publish/ -Force
-          Compress-Archive -Path src/Mono/artifacts/publish/* -DestinationPath Mono-win-x64.zip
-          (Get-FileHash Mono-win-x64.zip -Algorithm SHA256).Hash.ToLower() | Set-Content Mono-win-x64.zip.sha256
+          $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler was not installed.' }
+          & $compiler installer/Mono.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build Mono-Setup.exe.' }
       - uses: actions/attest-build-provenance@v2
         with:
-          subject-path: Mono-win-x64.zip
+          subject-path: artifacts/Mono-Setup.exe
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           prerelease: true
           files: |
-            Mono-win-x64.zip
-            Mono-win-x64.zip.sha256
+            artifacts/Mono-Setup.exe

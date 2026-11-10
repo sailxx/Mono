@@ -6,7 +6,7 @@
 
 <img src="assets/readme/hero.svg" width="100%" alt="Mono — локальные коды двухфакторной аутентификации для Windows">
 
-<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-win-x64.zip"><img src="assets/readme/download.svg" height="48" alt="Скачать для Windows 11"></a>
+<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-Setup.exe"><img src="assets/readme/download.svg" height="48" alt="Скачать для Windows 11"></a>
 
 <sub><a href="#возможности">Возможности</a> · <a href="#защита-данных">Защита данных</a> · <a href="#установка">Установка</a></sub>
 
@@ -34,10 +34,10 @@
 
 ## Установка
 
-1. Скачайте `Mono-win-x64.zip` из [последнего релиза](https://github.com/sailxx/Mono/releases/latest).
-2. Распакуйте архив в постоянную папку и запустите `Mono.exe`.
+1. Скачайте и запустите `Mono-Setup.exe` из [последнего релиза](https://github.com/sailxx/Mono/releases/latest).
+2. Установщик создаст ярлыки в меню «Пуск» и на рабочем столе. При повторном запуске он обновит установленную версию; удаление доступно в параметрах Windows → Приложения.
 
-Архив содержит автономную сборку x64 и зависимости Windows App SDK. Рядом доступен SHA-256 файл для проверки целостности.
+Установщик содержит автономную сборку x64, зависимости Windows App SDK и версию JetBrains Mono, используемую интерфейсом. Данные аккаунтов хранятся отдельно от папки приложения и сохраняются при обновлении и удалении.
 
 <br>
 
