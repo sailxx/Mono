@@ -5,7 +5,11 @@
       <Border Width="38" Height="38" CornerRadius="12" Background="#B7F36B" VerticalAlignment="Center"><TextBlock Text="N" Foreground="#090909" FontSize="21" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1"><TextBlock Text="NOIR AUTH" FontSize="16" FontWeight="SemiBold" CharacterSpacing="110"/><TextBlock x:Name="CountText" Text="ЛОКАЛЬНОЕ ХРАНИЛИЩЕ" FontSize="10" Foreground="#696969" CharacterSpacing="95"/></StackPanel>
       <Button x:Name="ImportButton" Grid.Column="2" Content="Импорт" Click="Import_Click" Background="#111111" Foreground="#B9B9B9" CornerRadius="9" Padding="13,9"/>
-      <Button Grid.Column="3" Content="＋ Добавить" Click="Add_Click" Background="#B7F36B" Foreground="#080808" CornerRadius="9" Padding="15,9" FontWeight="SemiBold"/>
+      <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+        <Button x:Name="ShowCodesButton" Content="Показать коды" Click="ShowCodes_Click" Background="#111111" Foreground="#B9B9B9" CornerRadius="9" Padding="13,9"/>
+        <Button Content="⚙" Click="Settings_Click" Background="#111111" Foreground="#B9B9B9" CornerRadius="9" Padding="13,9"/>
+        <Button Content="＋ Добавить" Click="Add_Click" Background="#B7F36B" Foreground="#080808" CornerRadius="9" Padding="15,9" FontWeight="SemiBold"/>
+      </StackPanel>
     </Grid>
     <Grid Grid.Row="1" ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <TextBox x:Name="SearchBox" PlaceholderText="⌕   Поиск по сервисам и аккаунтам" Background="#0A0A0A" BorderThickness="0" CornerRadius="10" Padding="14,11" TextChanged="Search_Changed"/>

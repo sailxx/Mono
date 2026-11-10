@@ -1,0 +1,26 @@
+name: Verify
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  otp-vectors:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
+  winui-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore src/NoirAuth/NoirAuth.csproj
+      - run: dotnet build src/NoirAuth/NoirAuth.csproj -c Release --no-restore
