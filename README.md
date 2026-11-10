@@ -45,7 +45,7 @@
 dotnet run --project .\tests\OtpVectors\OtpVectors.csproj -c Release
 ```
 
-Тестовый набор проверяет 10 HOTP и 18 TOTP официальных векторов RFC 4226/6238.
+Набор проверяет 10 HOTP и 18 TOTP официальных векторов RFC 4226/6238, protobuf migration-пayload Google Authenticator и зашифрованный/незашифрованный формат Aegis JSON.
 
 ## Разработка
 

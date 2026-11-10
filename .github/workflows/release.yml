@@ -11,11 +11,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-      - run: dotnet publish src/NoirAuth/NoirAuth.csproj -c Release -r win-x64 --self-contained true -p:WindowsAppSDKSelfContained=true -p:AppxGeneratePriEnabled=false -o artifacts/publish
+      - run: msbuild src/NoirAuth/NoirAuth.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:AppxGeneratePriEnabled=false /p:PublishDir=artifacts/publish/ /verbosity:minimal
       - name: Package portable app
         shell: pwsh
         run: |

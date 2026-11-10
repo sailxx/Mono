@@ -19,8 +19,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet restore src/NoirAuth/NoirAuth.csproj
-      - run: dotnet build src/NoirAuth/NoirAuth.csproj -c Release --no-restore
+      - run: msbuild src/NoirAuth/NoirAuth.csproj /restore /p:Configuration=Release /verbosity:minimal

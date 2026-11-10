@@ -1,5 +1,8 @@
 using NoirAuth.Models;
 using NoirAuth.Services;
+using System.Security.Cryptography;
+using System.Text.Json;
+using Org.BouncyCastle.Crypto.Generators;
 
 var hotpKey = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 string[] hotp = ["755224", "287082", "359152", "969429", "338314", "254676", "287922", "162583", "399871", "520489"];
@@ -35,7 +38,19 @@ WriteVarint(entry, 4, 1); WriteVarint(entry, 5, 1); WriteVarint(entry, 6, 1); Wr
 using var payload = new MemoryStream(); WriteBytes(payload, 1, entry.ToArray());
 var migration = NoirAuth.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
 if (migration.Count != 1 || migration[0].Issuer != "GitHub" || migration[0].Name != "sample@example.test" || migration[0].Type != "HOTP" || Otp.Generate(migration[0]) != "755224") throw new Exception("Google Authenticator migration protobuf import vector failed.");
-Console.WriteLine($"Passed {hotp.Length} HOTP, {vectors.Length} TOTP RFC vectors, and Google Authenticator migration protobuf import.");
+var aegisPlainDb = JsonSerializer.SerializeToUtf8Bytes(new { version = 3, entries = new[] { new { type = "totp", name = "sample", issuer = "Aegis", favorite = true, info = new { secret = hotpKey, algo = "SHA1", digits = 6, period = 30 } } }, groups = Array.Empty<object>() });
+var masterKey = RandomNumberGenerator.GetBytes(32); var passwordText = "test-password"; var passwordBytes = System.Text.Encoding.UTF8.GetBytes(passwordText); var salt = RandomNumberGenerator.GetBytes(32); var wrapNonce = RandomNumberGenerator.GetBytes(12); var wrapTag = new byte[16]; var wrappedKey = new byte[32];
+var derived = SCrypt.Generate(passwordBytes, salt, 32768, 8, 1, 32);
+using (var aes = new AesGcm(derived, 16)) aes.Encrypt(wrapNonce, masterKey, wrappedKey, wrapTag);
+var dbNonce = RandomNumberGenerator.GetBytes(12); var dbTag = new byte[16]; var dbCipher = new byte[aegisPlainDb.Length];
+using (var aes = new AesGcm(masterKey, 16)) aes.Encrypt(dbNonce, aegisPlainDb, dbCipher, dbTag);
+var aegisFixture = JsonSerializer.Serialize(new { version = 1, header = new { slots = new[] { new { type = 1, key = Convert.ToHexString(wrappedKey).ToLowerInvariant(), key_params = new { nonce = Convert.ToHexString(wrapNonce).ToLowerInvariant(), tag = Convert.ToHexString(wrapTag).ToLowerInvariant() }, n = 32768, r = 8, p = 1, salt = Convert.ToHexString(salt).ToLowerInvariant() } }, @params = new { nonce = Convert.ToHexString(dbNonce).ToLowerInvariant(), tag = Convert.ToHexString(dbTag).ToLowerInvariant() } }, db = Convert.ToBase64String(dbCipher) });
+var aegisImported = AegisImporter.Parse(aegisFixture, passwordText);
+if (aegisImported.Count != 1 || aegisImported[0].Issuer != "Aegis" || !aegisImported[0].Favorite || Otp.Generate(aegisImported[0], 59) != "287082") throw new Exception("Encrypted Aegis JSON import vector failed.");
+try { _ = AegisImporter.Parse(aegisFixture, "wrong-password"); throw new Exception("Encrypted Aegis importer accepted a wrong password."); } catch (FormatException) { }
+var plaintextAegis = JsonSerializer.Serialize(new { version = 1, header = new { slots = (object?)null, @params = (object?)null }, db = JsonSerializer.Deserialize<JsonElement>(aegisPlainDb) });
+if (AegisImporter.Parse(plaintextAegis).Count != 1) throw new Exception("Plaintext Aegis JSON import vector failed.");
+Console.WriteLine($"Passed {hotp.Length} HOTP, {vectors.Length} TOTP RFC vectors, Google migration protobuf, and encrypted/plaintext Aegis JSON vectors.");
 
 static void Check(string name, string expected, string actual)
 {

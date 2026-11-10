@@ -8,7 +8,6 @@ using Windows.Storage.Streams;
 using WinRT.Interop;
 using ZXing;
 using ZXing.Common;
-using Org.BouncyCastle.Crypto.Generators;
 using FormatException = System.FormatException;
 using NoirAuth.Models;
 using NoirAuth.Services;
@@ -174,43 +173,9 @@ public sealed partial class MainWindow : Window
     }
     private async Task<List<Account>> ParseAegis(string json)
     {
-        using var doc = System.Text.Json.JsonDocument.Parse(json); var root = doc.RootElement;
-        var db = root.GetProperty("db");
-        if (db.ValueKind == System.Text.Json.JsonValueKind.String)
-        {
-            var pass = new PasswordBox { PlaceholderText = "Пароль резервной копии Aegis", MinWidth = 300 };
-            var dialog = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Зашифрованная копия Aegis", Content = pass, PrimaryButtonText = "Расшифровать", CloseButtonText = "Отмена" };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return [];
-            var header = root.GetProperty("header"); var encryptedDb = Convert.FromBase64String(db.GetString()!); byte[]? master = null; var passwordBytes = System.Text.Encoding.UTF8.GetBytes(pass.Password);
-            try
-            {
-                foreach (var slot in header.GetProperty("slots").EnumerateArray())
-                {
-                    if (slot.GetProperty("type").GetInt32() != 1) continue;
-                    int n = slot.GetProperty("n").GetInt32(), r = slot.GetProperty("r").GetInt32(), p = slot.GetProperty("p").GetInt32();
-                    if (n is < 16384 or > 32768 || (n & (n - 1)) != 0 || r is < 1 or > 8 || p is < 1 or > 4) throw new FormatException("Параметры scrypt в этой копии Aegis выходят за поддерживаемые пределы.");
-                    var derived = SCrypt.Generate(passwordBytes, Convert.FromHexString(slot.GetProperty("salt").GetString()!), n, r, p, 32);
-                    var keyParams = slot.GetProperty("key_params"); var encryptedKey = Convert.FromHexString(slot.GetProperty("key").GetString()!); var decryptedKey = new byte[encryptedKey.Length];
-                    try { using var aes = new System.Security.Cryptography.AesGcm(derived, 16); aes.Decrypt(Convert.FromHexString(keyParams.GetProperty("nonce").GetString()!), encryptedKey, Convert.FromHexString(keyParams.GetProperty("tag").GetString()!), decryptedKey); master = decryptedKey; break; }
-                    catch (System.Security.Cryptography.CryptographicException) { System.Security.Cryptography.CryptographicOperations.ZeroMemory(decryptedKey); }
-                    finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(derived); System.Security.Cryptography.CryptographicOperations.ZeroMemory(encryptedKey); }
-                }
-                if (master is null) throw new FormatException("Неверный пароль Aegis или отсутствует слот с паролем.");
-                var parameters = header.GetProperty("params"); var plainDb = new byte[encryptedDb.Length];
-                try { using var aes = new System.Security.Cryptography.AesGcm(master, 16); aes.Decrypt(Convert.FromHexString(parameters.GetProperty("nonce").GetString()!), encryptedDb, Convert.FromHexString(parameters.GetProperty("tag").GetString()!), plainDb); db = System.Text.Json.JsonDocument.Parse(plainDb).RootElement.Clone(); }
-                finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(plainDb); }
-            }
-            catch (System.Security.Cryptography.CryptographicException) { throw new FormatException("Пароль неверен или файл Aegis повреждён."); }
-            finally { if (master is not null) System.Security.Cryptography.CryptographicOperations.ZeroMemory(master); System.Security.Cryptography.CryptographicOperations.ZeroMemory(passwordBytes); System.Security.Cryptography.CryptographicOperations.ZeroMemory(encryptedDb); }
-        }
-        var entries = db.GetProperty("entries"); var accounts = new List<Account>();
-        foreach (var entry in entries.EnumerateArray())
-        {
-            var info = entry.GetProperty("info"); var type = entry.GetProperty("type").GetString() ?? "totp";
-            if (type is not ("totp" or "hotp")) continue;
-            accounts.Add(new Account { Issuer = entry.TryGetProperty("issuer", out var issuer) ? issuer.GetString() ?? "" : "", Name = entry.TryGetProperty("name", out var name) ? name.GetString() ?? "" : "", Secret = info.GetProperty("secret").GetString() ?? "", Algorithm = info.TryGetProperty("algo", out var algo) ? algo.GetString() ?? "SHA1" : "SHA1", Digits = info.TryGetProperty("digits", out var digits) ? digits.GetInt32() : 6, Period = info.TryGetProperty("period", out var period) ? period.GetInt32() : 30, Type = type.ToUpperInvariant(), Counter = info.TryGetProperty("counter", out var counter) ? counter.GetInt64() : 0 });
-        }
-        return accounts;
+        string? password = null;
+        if (AegisImporter.RequiresPassword(json)) { password = await AskPassword("Пароль резервной копии Aegis"); if (password is null) return []; }
+        return AegisImporter.Parse(json, password);
     }
     private async void Backup_Click(object sender, RoutedEventArgs e)
     {
