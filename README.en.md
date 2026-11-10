@@ -37,6 +37,6 @@ Secrets live in the local profile, protected by Windows DPAPI for the current Wi
 1. Download and run `Mono-Setup.exe` from the [latest release](https://github.com/sailxx/Mono/releases/latest).
 2. The installer creates Start menu and desktop shortcuts. Running it again updates the installed version; uninstall Mono from Windows Settings → Apps.
 
-The installer includes the self-contained x64 app, Windows App SDK dependencies, and the bundled JetBrains Mono font. Account data stays outside the app folder and is preserved during updates and uninstall.
+The installer includes the self-contained x64 app, Windows App SDK dependencies, and the bundled Cascadia Code font. Account data stays outside the app folder and is preserved during updates and uninstall.
 
 <br><div align="center"><sub><b>MONO</b> · Local. Quiet. No cloud.</sub></div>

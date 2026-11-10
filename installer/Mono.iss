@@ -1,5 +1,5 @@
 #define AppName "Mono"
-#define AppVersion "0.3.0"
+#define AppVersion "0.3.1"
 #define AppPublisher "sailxx"
 #define AppUrl "https://github.com/sailxx/Mono"
 #define AppExe "Mono.exe"
@@ -18,7 +18,7 @@ UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\src\Mono\Assets\Mono.ico
 OutputDir=..\artifacts
 OutputBaseFilename=Mono-Setup
-VersionInfoVersion=0.3.0.0
+VersionInfoVersion=0.3.1.0
 VersionInfoCompany={#AppPublisher}
 VersionInfoDescription=Mono Windows authenticator installer
 VersionInfoProductName=Mono

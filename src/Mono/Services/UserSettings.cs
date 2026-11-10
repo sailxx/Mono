@@ -5,7 +5,8 @@ namespace Mono.Services;
 
 public sealed class UserSettings
 {
-    public bool HideCodes { get; set; } = true;
+    public bool HideCodes { get; set; }
+    public bool CodeVisibilityConfigured { get; set; }
     public int ClipboardClearSeconds { get; set; } = 30;
     public int AutoLockMinutes { get; set; } = 5;
     public string? PasswordSalt { get; set; }
@@ -27,6 +28,12 @@ public sealed class UserSettings
             {
                 var settings = JsonSerializer.Deserialize<UserSettings>(bytes) ?? new();
                 settings._path = path;
+                if (!settings.CodeVisibilityConfigured)
+                {
+                    settings.HideCodes = false;
+                    settings.CodeVisibilityConfigured = true;
+                    settings.Save();
+                }
                 return settings;
             }
             finally { CryptographicOperations.ZeroMemory(bytes); }
@@ -37,6 +44,7 @@ public sealed class UserSettings
     }
     public void Save()
     {
+        CodeVisibilityConfigured = true;
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!); var bytes = JsonSerializer.SerializeToUtf8Bytes(this);
         try
         {

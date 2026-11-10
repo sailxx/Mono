@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
@@ -33,6 +34,9 @@ public sealed partial class MainWindow : Window
         var windowHandle = WindowNative.GetWindowHandle(this);
         var appWindow = AppWindow.GetFromWindowId(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle));
         var titleBar = appWindow.TitleBar;
+        titleBar.IconShowOptions = IconShowOptions.ShowIconAndSystemMenu;
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Mono.ico");
+        if (File.Exists(iconPath)) appWindow.SetIcon(iconPath);
         if (AppWindowTitleBar.IsCustomizationSupported())
         {
             titleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
@@ -48,9 +52,9 @@ public sealed partial class MainWindow : Window
             titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
             titleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 170, 170, 170);
         }
-        appWindow.Resize(new SizeInt32(620, 640));
+        appWindow.Resize(new SizeInt32(660, 700));
         var version = typeof(App).Assembly.GetName().Version;
-        VersionText.Text = version is null ? "v0.3.0" : $"v{version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}";
+        VersionText.Text = version is null ? "v0.3.1" : $"v{version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}";
         ShowCodesButton.Content = _settings.HideCodes ? "Показать коды" : "Скрыть коды";
         if (Content is UIElement root) { root.PointerPressed += (_, _) => Touch(); root.KeyDown += (_, _) => Touch(); }
         _timer.Tick += async (_, _) =>
@@ -105,7 +109,7 @@ public sealed partial class MainWindow : Window
         var visible = _accounts.Where(a => q.Length == 0 || a.Issuer.Contains(q, StringComparison.OrdinalIgnoreCase) || a.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(a => a.Favorite).ThenBy(a => a.Issuer).ThenBy(a => a.Name).ToList();
         AccountList.Children.Clear(); _cardLabels.Clear(); _codeSteps.Clear();
-        CountText.Text = $"{_accounts.Count} АККАУНТОВ · DPAPI";
+        CountText.Text = $"{_accounts.Count} АККАУНТОВ · ЛОКАЛЬНО";
         foreach (var account in visible) AccountList.Children.Add(BuildCard(account));
         if (visible.Count == 0)
         {
@@ -124,16 +128,16 @@ public sealed partial class MainWindow : Window
         var remaining = isHotp ? "ручное обновление" : a.Period > 0 ? $"обновится через {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period} с" : "некорректный период TOTP";
         var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
         var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#777777") };
-        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono"), FontSize = 25, CharacterSpacing = 50, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
+        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/CascadiaCode.ttf#Cascadia Code"), FontSize = 27, CharacterSpacing = 0, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
         var metadata = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         metadata.Children.Add(title); metadata.Children.Add(name);
         var codeStack = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 9, Foreground = Brush("#727272") };
+        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 10, Foreground = Brush("#929292") };
         codeStack.Children.Add(codeBlock); codeStack.Children.Add(timeBlock);
         _cardLabels[a.Id] = (codeBlock, timeBlock);
         _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() / a.Period : long.MinValue;
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-        var copy = new Button { Content = "Копировать", Background = Brush("#171717"), Foreground = Brush("#CFCFCF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(9, 6, 9, 6), IsEnabled = error.Length == 0, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono") };
+        var copy = new Button { Content = "Копировать код", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), CornerRadius = new CornerRadius(10), Padding = new Thickness(11, 8, 11, 8), IsEnabled = error.Length == 0, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/CascadiaCode.ttf#Cascadia Code") };
         copy.Click += async (_, _) =>
         {
             Touch();
@@ -149,24 +153,26 @@ public sealed partial class MainWindow : Window
                 }
                 var package = new DataPackage(); package.SetText(current); Clipboard.SetContent(package);
                 if (_settings.ClipboardClearSeconds > 0) _ = ClearClipboardAfter(current, _settings.ClipboardClearSeconds);
-                copy.Content = "Скопировано"; await Task.Delay(1100); copy.Content = "Копировать";
+                copy.Content = "Скопировано"; await Task.Delay(1100); copy.Content = "Копировать код";
             }
             catch (Exception ex) { await ShowError("Код не скопирован", ex.Message); }
         };
-        var pin = new Button { Content = a.Favorite ? "★" : "☆", Background = Brush("#111111"), Foreground = Brush("#FFFFFF"), CornerRadius = new CornerRadius(7), Padding = new Thickness(8, 5, 8, 5) };
+        var pin = new Button { Content = new FontIcon { Glyph = a.Favorite ? "\uE735" : "\uE734", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Background = Brush("#171717"), Foreground = Brush("#FFFFFF"), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 8, 10, 8) };
+        AutomationProperties.SetName(pin, a.Favorite ? "Убрать из избранного" : "Добавить в избранное");
         pin.Click += (_, _) => { a.Favorite = !a.Favorite; Save(); RenderAccounts(); };
-        var edit = new Button { Content = "···", Background = Brush("#111111"), Foreground = Brush("#999999"), CornerRadius = new CornerRadius(7), Padding = new Thickness(8, 5, 8, 5) };
+        var edit = new Button { Content = new FontIcon { Glyph = "\uE712", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Background = Brush("#171717"), Foreground = Brush("#BDBDBD"), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 8, 10, 8) };
+        AutomationProperties.SetName(edit, "Действия с аккаунтом");
         edit.Click += (_, _) => { var menu = new MenuFlyout(); var editItem = new MenuFlyoutItem { Text = "Изменить" }; editItem.Click += async (_, _) => await EditAccount(a); var deleteItem = new MenuFlyoutItem { Text = "Удалить" }; deleteItem.Click += async (_, _) => { var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Удалить аккаунт?", Content = $"{a.Issuer} · {a.Name}", PrimaryButtonText = "Удалить", CloseButtonText = "Отмена", DefaultButton = ContentDialogButton.Close }; if (await dlg.ShowAsync() == ContentDialogResult.Primary) { _accounts.Remove(a); Save(); RenderAccounts(); } }; menu.Items.Add(editItem); menu.Items.Add(deleteItem); menu.ShowAt(edit); };
         actions.Children.Add(pin); actions.Children.Add(edit);
         var top = new Grid { ColumnSpacing = 8 };
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         top.Children.Add(metadata); Grid.SetColumn(actions, 1); top.Children.Add(actions);
-        var body = new StackPanel { Spacing = 8, Margin = new Thickness(12, 10, 12, 10) };
+        var body = new StackPanel { Spacing = 10, Margin = new Thickness(15, 13, 15, 13) };
         body.Children.Add(top); body.Children.Add(codeStack);
         var copyRow = new StackPanel { Orientation = Orientation.Horizontal };
         copyRow.Children.Add(copy); body.Children.Add(copyRow);
-        return new Border { Background = Brush("#090909"), BorderBrush = Brush("#202020"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Child = body };
+        return new Border { Background = Brush("#101010"), BorderBrush = Brush("#242424"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Child = body };
     }
 
     private async Task EditAccount(Account? edit = null)
