@@ -32,7 +32,39 @@ public sealed partial class MainWindow : Window
         if (Content is UIElement root) { root.PointerPressed += (_, _) => Touch(); root.KeyDown += (_, _) => Touch(); }
         _timer.Tick += async (_, _) => { ClockText.Text = DateTime.Now.ToString("HH:mm:ss"); if (!_locked && _settings.HasPassword && _settings.AutoLockMinutes > 0 && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(_settings.AutoLockMinutes)) await LockAndUnlock(); else UpdateCodes(); };
         _timer.Start();
-        ((FrameworkElement)Content).Loaded += async (_, _) => { if (_settings.HasPassword) await Unlock(); else _accounts = _vault.Load(); RenderAccounts(); };
+        ((FrameworkElement)Content).Loaded += async (_, _) =>
+        {
+            try
+            {
+                if (_settings.HasPassword) await Unlock();
+                else _accounts = _vault.Load();
+                RenderAccounts();
+                LogStartup("Initial account list rendered");
+            }
+            catch (Exception ex)
+            {
+                LogStartup($"Initial screen failed: {ex}");
+                AccountList.Children.Clear();
+                AccountList.Children.Add(new TextBlock
+                {
+                    Text = $"Не удалось загрузить хранилище: {ex.Message}",
+                    Foreground = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255)),
+                    FontSize = 16,
+                    TextWrapping = TextWrapping.Wrap
+                });
+            }
+        };
+    }
+
+    private static void LogStartup(string message)
+    {
+        try
+        {
+            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mono");
+            Directory.CreateDirectory(directory);
+            File.AppendAllText(Path.Combine(directory, "startup.log"), $"{DateTimeOffset.Now:O} {message}{Environment.NewLine}");
+        }
+        catch { }
     }
 
     private void RenderAccounts()
