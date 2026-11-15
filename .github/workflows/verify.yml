@@ -19,4 +19,4 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-      - run: msbuild src/Mono/Mono.csproj /restore /p:Configuration=Release /verbosity:minimal
+      - run: msbuild src/WinOTP/WinOTP.csproj /restore /p:Configuration=Release /verbosity:minimal

@@ -1,4 +1,4 @@
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public static class DataPaths
 {

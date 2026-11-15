@@ -21,19 +21,19 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-      - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:PublishDir=artifacts/publish/ /verbosity:minimal
+      - run: msbuild src/WinOTP/WinOTP.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:PublishDir=artifacts/publish/ /verbosity:minimal
       - name: Install Inno Setup
         run: choco install innosetup --no-progress
       - name: Build installer and checksum
         shell: pwsh
         run: |
-          $xaml = @(Get-ChildItem src/Mono/bin/Release -Filter *.xbf -File -Recurse)
+          $xaml = @(Get-ChildItem src/WinOTP/bin/Release -Filter *.xbf -File -Recurse)
           if ($xaml.Count -eq 0) { throw 'No compiled WinUI XAML resources were produced.' }
-          Copy-Item -Path $xaml.FullName -Destination src/Mono/artifacts/publish/ -Force
-          if (-not (Test-Path src/Mono/artifacts/publish/WinOTP.exe)) { throw 'Missing WinOTP executable.' }
+          Copy-Item -Path $xaml.FullName -Destination src/WinOTP/artifacts/publish/ -Force
+          if (-not (Test-Path src/WinOTP/artifacts/publish/WinOTP.exe)) { throw 'Missing WinOTP executable.' }
           $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
           if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler was not installed.' }
-          & $compiler installer/Mono.iss
+          & $compiler installer/WinOTP.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
           $hash = (Get-FileHash artifacts/WinOTP-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  WinOTP-Setup.exe" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii

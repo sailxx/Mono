@@ -1,5 +1,5 @@
-using Mono.Models;
-using Mono.Services;
+using WinOTP.Models;
+using WinOTP.Services;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Org.BouncyCastle.Crypto.Generators;
@@ -52,7 +52,7 @@ WriteBytes(entry, 2, System.Text.Encoding.UTF8.GetBytes("GitHub:sample@example.t
 WriteBytes(entry, 3, System.Text.Encoding.UTF8.GetBytes("GitHub"));
 WriteVarint(entry, 4, 1); WriteVarint(entry, 5, 1); WriteVarint(entry, 6, 1); WriteVarint(entry, 7, 0);
 using var payload = new MemoryStream(); WriteBytes(payload, 1, entry.ToArray());
-var migration = Mono.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
+var migration = WinOTP.Services.MigrationParser.ParseUri("otpauth-migration://offline?data=" + Uri.EscapeDataString(Convert.ToBase64String(payload.ToArray())));
 if (migration.Count != 1 || migration[0].Issuer != "GitHub" || migration[0].Name != "sample@example.test" || migration[0].Type != "HOTP" || Otp.Generate(migration[0]) != "755224") throw new Exception("Google Authenticator migration protobuf import vector failed.");
 var malformedVarint = Enumerable.Repeat((byte)0xFF, 9).Append((byte)0x02).ToArray();
 Expect<FormatException>("Migration protobuf varint overflow", () => MigrationParser.ParseUri("otpauth-migration://offline?data=" + Convert.ToBase64String(malformedVarint)));
@@ -73,7 +73,7 @@ Expect<FormatException>("Aegis rejects aggregate scrypt work before key derivati
 var plaintextAegis = JsonSerializer.Serialize(new { version = 1, header = new { slots = (object?)null, @params = (object?)null }, db = JsonSerializer.Deserialize<JsonElement>(aegisPlainDb) });
 if (AegisImporter.Parse(plaintextAegis).Count != 1) throw new Exception("Plaintext Aegis JSON import vector failed.");
 
-var storageTestDirectory = Path.Combine(Path.GetTempPath(), "Mono-storage-test-" + Guid.NewGuid().ToString("N"));
+var storageTestDirectory = Path.Combine(Path.GetTempPath(), "WinOTP-storage-test-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(storageTestDirectory);
 try
 {

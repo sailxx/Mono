@@ -1,4 +1,4 @@
-<Window x:Class="Mono.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WinOTP">
+<Window x:Class="WinOTP.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="WinOTP">
   <Grid RequestedTheme="Dark" Background="#0B0B0B" Padding="16,14,16,12" RowSpacing="12">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid ColumnSpacing="8">

@@ -1,7 +1,7 @@
 #define AppName "WinOTP"
 #define AppVersion "0.3.2"
 #define AppPublisher "sailxx"
-#define AppUrl "https://github.com/sailxx/Mono"
+#define AppUrl "https://github.com/sailxx/WinOTP"
 #define AppExe "WinOTP.exe"
 
 [Setup]
@@ -15,7 +15,7 @@ AppUpdatesURL={#AppUrl}/releases/latest
 DefaultDirName={localappdata}\Programs\WinOTP
 DefaultGroupName=WinOTP
 UninstallDisplayIcon={app}\{#AppExe}
-SetupIconFile=..\src\Mono\Assets\WinOTP.ico
+SetupIconFile=..\src\WinOTP\Assets\WinOTP.ico
 OutputDir=..\artifacts
 OutputBaseFilename=WinOTP-Setup
 VersionInfoVersion=0.3.2.0
@@ -39,7 +39,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a WinOTP desktop shortcut"; GroupDescription: "Shortcuts:"
 
 [Files]
-Source: "..\src\Mono\artifacts\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\WinOTP\artifacts\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\WinOTP"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; IconFilename: "{app}\{#AppExe}"

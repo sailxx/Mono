@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml;
 using System.Runtime.InteropServices;
-using Mono.Services;
+using WinOTP.Services;
 
-namespace Mono;
+namespace WinOTP;
 
 public partial class App : Application
 {

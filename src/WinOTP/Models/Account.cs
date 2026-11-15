@@ -1,4 +1,4 @@
-namespace Mono.Models;
+namespace WinOTP.Models;
 
 public sealed class Account
 {

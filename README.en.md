@@ -12,7 +12,7 @@
 <br>
 <img src="assets/readme/features.svg" width="100%" alt="One-time codes, local encryption and account import">
 
-**WinOTP**, formerly Mono, is a local authenticator for Windows 11. TOTP and HOTP codes, search and favorites, without registration or cloud sync.
+**WinOTP** is a local authenticator for Windows 11. TOTP and HOTP codes, search and favorites, without registration or cloud sync.
 
 <details>
 <summary><b>Features</b></summary>
@@ -44,7 +44,7 @@ No administrator rights are required. Data is separate from the application and 
 The release workflow produces `SHA256SUMS.txt` and a provenance attestation for new releases:
 
 ```powershell
-cd C:\Users\Vlad\Downloads
+cd $HOME\Downloads
 gh attestation verify WinOTP-Setup.exe --repo sailxx/Mono
 Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
 ```
@@ -55,12 +55,12 @@ Compare the hash with the checksum from the same release. Provenance is not Wind
 
 ## Build from source
 
-Requires Windows, .NET SDK 10 and WinUI build tools. Internal project paths retain the Mono name for now.
+Requires Windows, .NET SDK 10 and WinUI build tools. Replace the path in the first command with your project folder.
 
 ```cmd
-cd /d C:\Users\Vlad\sx\mono
+cd /d C:\path\to\project
 dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-dotnet build src/Mono/Mono.csproj -c Release
+dotnet build src/WinOTP/WinOTP.csproj -c Release
 ```
 
 License: [LICENSE](LICENSE).

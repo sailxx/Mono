@@ -1,7 +1,7 @@
-using Mono.Models;
+using WinOTP.Models;
 using System.Security.Cryptography;
 
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public static class MigrationParser
 {

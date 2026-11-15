@@ -12,7 +12,7 @@
 <br>
 <img src="assets/readme/features.svg" width="100%" alt="Одноразовые коды, локальное шифрование, импорт аккаунтов">
 
-**WinOTP** (ранее Mono) — локальный аутентификатор для Windows 11. Коды TOTP и HOTP, поиск и избранное, без регистрации и облачной синхронизации.
+**WinOTP** — локальный аутентификатор для Windows 11. Коды TOTP и HOTP, поиск и избранное, без регистрации и облачной синхронизации.
 
 <details>
 <summary><b>Возможности</b></summary>
@@ -44,7 +44,7 @@
 Для новых релизов процесс сборки создаёт `SHA256SUMS.txt` и подтверждение происхождения:
 
 ```powershell
-cd C:\Users\Vlad\Downloads
+cd $HOME\Downloads
 gh attestation verify WinOTP-Setup.exe --repo sailxx/Mono
 Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
 ```
@@ -55,12 +55,12 @@ Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
 
 ## Сборка из исходников
 
-Windows, .NET SDK 10 и инструменты сборки WinUI. Внутренние пути проекта пока сохраняют имя Mono.
+Нужны Windows, .NET SDK 10 и инструменты сборки WinUI. Замените путь в первой команде на папку проекта.
 
 ```cmd
-cd /d C:\Users\Vlad\sx\mono
+cd /d C:\path\to\project
 dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
-dotnet build src/Mono/Mono.csproj -c Release
+dotnet build src/WinOTP/WinOTP.csproj -c Release
 ```
 
 Лицензия: [LICENSE](LICENSE).

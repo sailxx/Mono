@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public sealed class UserSettings
 {

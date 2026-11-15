@@ -1,7 +1,7 @@
 using System.Globalization;
-using Mono.Models;
+using WinOTP.Models;
 
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public static class OtpUriParser
 {

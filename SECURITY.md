@@ -18,4 +18,4 @@ Maintainers should enable private vulnerability reporting, secret scanning and p
 
 ## Release verification
 
-Check the build provenance of releases that include an attestation using `gh attestation verify <installer>.exe --repo sailxx/Mono`. Build provenance is not Windows code signing and does not guarantee absence of vulnerabilities.
+Check the build provenance of releases that include an attestation using `gh attestation verify <installer>.exe --repo sailxx/WinOTP`. Build provenance is not Windows code signing and does not guarantee absence of vulnerabilities.

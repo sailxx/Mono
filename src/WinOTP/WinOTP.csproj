@@ -7,7 +7,7 @@
     <WindowsPackageType>None</WindowsPackageType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Mono</RootNamespace>
+    <RootNamespace>WinOTP</RootNamespace>
     <AssemblyName>WinOTP</AssemblyName>
     <Product>WinOTP</Product>
     <Title>WinOTP</Title>

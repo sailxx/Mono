@@ -12,10 +12,10 @@ using Windows.Graphics;
 using ZXing;
 using ZXing.Common;
 using FormatException = System.FormatException;
-using Mono.Models;
-using Mono.Services;
+using WinOTP.Models;
+using WinOTP.Services;
 
-namespace Mono;
+namespace WinOTP;
 
 public sealed partial class MainWindow : Window
 {

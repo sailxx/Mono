@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using Mono.Models;
+using WinOTP.Models;
 
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public sealed class Vault
 {

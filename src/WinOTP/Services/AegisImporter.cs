@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using Mono.Models;
+using WinOTP.Models;
 using Org.BouncyCastle.Crypto.Generators;
 
-namespace Mono.Services;
+namespace WinOTP.Services;
 
 public static class AegisImporter
 {
