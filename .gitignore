@@ -5,3 +5,17 @@
 artifacts/
 *.user
 *.suo
+.sharrowkin/
+
+# Local credentials and vault data
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+vault.bin
+settings.bin
+startup.log
+*.winotp

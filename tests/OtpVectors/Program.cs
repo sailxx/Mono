@@ -66,6 +66,10 @@ var aegisFixture = JsonSerializer.Serialize(new { version = 1, header = new { sl
 var aegisImported = AegisImporter.Parse(aegisFixture, passwordText);
 if (aegisImported.Count != 1 || aegisImported[0].Issuer != "Aegis" || !aegisImported[0].Favorite || Otp.Generate(aegisImported[0], 59) != "287082") throw new Exception("Encrypted Aegis JSON import vector failed.");
 try { _ = AegisImporter.Parse(aegisFixture, "wrong-password"); throw new Exception("Encrypted Aegis importer accepted a wrong password."); } catch (FormatException) { }
+var excessiveSlots = JsonSerializer.Serialize(new { db = "", header = new { slots = Enumerable.Range(0, 9).Select(_ => new { type = 1 }).ToArray() } });
+Expect<FormatException>("Aegis rejects excessive slots before key derivation", () => AegisImporter.Parse(excessiveSlots, "password"));
+var excessiveWork = JsonSerializer.Serialize(new { db = "", header = new { slots = Enumerable.Range(0, 2).Select(_ => new { type = 1, n = 32768, r = 8, p = 4 }).ToArray() } });
+Expect<FormatException>("Aegis rejects aggregate scrypt work before key derivation", () => AegisImporter.Parse(excessiveWork, "password"));
 var plaintextAegis = JsonSerializer.Serialize(new { version = 1, header = new { slots = (object?)null, @params = (object?)null }, db = JsonSerializer.Deserialize<JsonElement>(aegisPlainDb) });
 if (AegisImporter.Parse(plaintextAegis).Count != 1) throw new Exception("Plaintext Aegis JSON import vector failed.");
 
@@ -92,6 +96,10 @@ try
     var loadedSettings = UserSettings.Load(settingsPath);
     if (loadedSettings.HideCodes || loadedSettings.ClipboardClearSeconds != 30 || loadedSettings.AutoLockMinutes != 1 || !loadedSettings.VerifyPassword("sample-password") || loadedSettings.VerifyPassword("wrong-password") || File.Exists(settingsPath + ".tmp"))
         throw new Exception("DPAPI settings/password round-trip failed.");
+    var incomplete = new UserSettings(settingsPath) { PasswordSalt = Convert.ToBase64String(new byte[16]) };
+    if (incomplete.VerifyPassword("anything")) throw new Exception("Incomplete password configuration bypassed verification.");
+    incomplete.Save();
+    Expect<InvalidOperationException>("Settings reject incomplete password protection", () => UserSettings.Load(settingsPath));
     File.WriteAllBytes(settingsPath, [1, 2, 3]);
     Expect<InvalidOperationException>("Settings reject corrupted DPAPI data", () => UserSettings.Load(settingsPath));
 }

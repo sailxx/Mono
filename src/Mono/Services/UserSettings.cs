@@ -14,10 +14,10 @@ public sealed class UserSettings
 
     private string _path;
     public UserSettings() : this(null) { }
-    public UserSettings(string? path) => _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoirAuth", "settings.bin");
+    public UserSettings(string? path) => _path = path ?? DataPaths.File("settings.bin");
     public static UserSettings Load(string? path = null)
     {
-        if (path is null) path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoirAuth", "settings.bin");
+        if (path is null) path = DataPaths.File("settings.bin");
         if (!File.Exists(path)) return new(path);
         byte[]? protectedBytes = null;
         try
@@ -28,6 +28,8 @@ public sealed class UserSettings
             {
                 var settings = JsonSerializer.Deserialize<UserSettings>(bytes) ?? new();
                 settings._path = path;
+                if ((settings.PasswordSalt is null) != (settings.PasswordHash is null))
+                    throw new InvalidOperationException("Password settings are incomplete. Restore a valid settings file; protection was not disabled.");
                 if (!settings.CodeVisibilityConfigured)
                 {
                     settings.HideCodes = false;
@@ -67,7 +69,8 @@ public sealed class UserSettings
     }
     public bool VerifyPassword(string password)
     {
-        if (PasswordSalt is null || PasswordHash is null) return true;
+        if (PasswordSalt is null && PasswordHash is null) return true;
+        if (PasswordSalt is null || PasswordHash is null) return false;
         byte[]? salt = null, expected = null, actual = null;
         try
         {

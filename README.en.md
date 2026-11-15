@@ -3,40 +3,64 @@
 [Русский](README.md) · **English**
 
 <br>
+<img src="assets/readme/hero.svg" width="100%" alt="WinOTP — your codes, your device">
 
-<img src="assets/readme/hero.svg" width="100%" alt="Mono — local two-factor codes for Windows">
-
-<a href="https://github.com/sailxx/Mono/releases/latest/download/Mono-Setup.exe"><img src="assets/readme/download.svg" height="48" alt="Download for Windows 11"></a>
-
-<sub><a href="#features">Features</a> · <a href="#data-protection">Data protection</a> · <a href="#install">Install</a></sub>
+<a href="https://github.com/sailxx/Mono/releases"><img src="assets/readme/download.svg" height="52" alt="Windows 11 releases"></a>
 
 </div>
 
 <br>
+<img src="assets/readme/features.svg" width="100%" alt="One-time codes, local encryption and account import">
 
-<img src="assets/readme/features.svg" width="100%" alt="One-time codes, DPAPI, account import and a minimalist interface">
+**WinOTP**, formerly Mono, is a local authenticator for Windows 11. TOTP and HOTP codes, search and favorites, without registration or cloud sync.
 
-**Mono** is an offline Windows 11 app that keeps OTP accounts on your device and generates TOTP/HOTP codes. No sign-up or cloud sync.
+<details>
+<summary><b>Features</b></summary>
 
-## Features
+- RFC 6238 TOTP and RFC 4226 HOTP; SHA-1/256/512; 6 or 8 digits.
+- Add, edit, remove, search, favorite and copy accounts and codes.
+- Import otpauth URIs, Google Authenticator migration URIs, QR images and Aegis JSON.
+- Preview imported accounts and skip existing entries.
+- Password-encrypted `.winotp` backup files.
+- Optional interface lock, idle timeout and clipboard clearing.
 
-- TOTP (RFC 6238) and HOTP (RFC 4226), SHA-1/SHA-256/SHA-512, 6 or 8 digits.
-- Add, edit, delete, search, favorite and copy codes.
-- Import `otpauth://` and Google Authenticator migration URIs, including multiple accounts in a protobuf payload.
-- Import QR images from a file or clipboard, and encrypted or unencrypted Aegis JSON with a selectable preview.
-- Encrypted local vault and encrypted backup.
-- Optional master password, automatic lock and clipboard clearing.
-- OLED black theme with a live code timer.
+</details>
 
 ## Data protection
 
-Secrets live in the local profile, protected by Windows DPAPI for the current Windows user. The app does not send account data over the network. Exported backups use a portable password-based AES-256-GCM + PBKDF2-SHA256 envelope.
+Windows DPAPI protects the vault for the current Windows user. Portable backups use AES-256-GCM and PBKDF2-SHA256 with 600,000 iterations. The master password locks the **interface**, not access by malware running as your Windows user. Clipboard clearing cannot erase clipboard history or copies captured by other apps.
+
+Data lives in `%LOCALAPPDATA%\WinOTP`. Migration copies legacy files from `%LOCALAPPDATA%\NoirAuth` without removing the originals. Keep them until you have verified the migrated vault and a restorable backup. See [SECURITY.md](SECURITY.md).
 
 ## Install
 
-1. Download and run `Mono-Setup.exe` from the [latest release](https://github.com/sailxx/Mono/releases/latest).
-2. The installer creates Start menu and desktop shortcuts. Running it again updates the installed version; uninstall Mono from Windows Settings → Apps.
+Download the installer from [Releases](https://github.com/sailxx/Mono/releases). New builds use `WinOTP-Setup.exe`; older releases may still use Mono. Changing source files does not publish a new release.
 
-The installer includes the self-contained x64 app, Windows App SDK dependencies, and the bundled Cascadia Code font. Account data stays outside the app folder and is preserved during updates and uninstall.
+No administrator rights are required. Data is separate from the application and is retained when uninstalling. The application interface and installer use English.
 
-<br><div align="center"><sub><b>MONO</b> · Local. Quiet. No cloud.</sub></div>
+<details>
+<summary><b>Verify release provenance and checksum</b></summary>
+
+The release workflow produces `SHA256SUMS.txt` and a provenance attestation for new releases:
+
+```powershell
+cd C:\Users\Vlad\Downloads
+gh attestation verify WinOTP-Setup.exe --repo sailxx/Mono
+Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
+```
+
+Compare the hash with the checksum from the same release. Provenance is not Windows code signing or a guarantee of vulnerability-free code.
+
+</details>
+
+## Build from source
+
+Requires Windows, .NET SDK 10 and WinUI build tools. Internal project paths retain the Mono name for now.
+
+```cmd
+cd /d C:\Users\Vlad\sx\mono
+dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
+dotnet build src/Mono/Mono.csproj -c Release
+```
+
+License: [LICENSE](LICENSE).

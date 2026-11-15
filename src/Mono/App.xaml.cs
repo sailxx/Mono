@@ -1,12 +1,13 @@
 using Microsoft.UI.Xaml;
 using System.Runtime.InteropServices;
+using Mono.Services;
 
 namespace Mono;
 
 public partial class App : Application
 {
     private Window? _window;
-    private static readonly string LogPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mono", "startup.log");
+    private static readonly string LogPath = Path.Combine(DataPaths.Root, "startup.log");
 
     public App()
     {
@@ -14,8 +15,8 @@ public partial class App : Application
         UnhandledException += (_, e) =>
         {
             Report(e.Exception);
-            e.Handled = true;
-            ShowError(e.Exception.ToString());
+            ShowError(e.Exception);
+            // Do not continue after an unknown exception with potentially inconsistent vault state.
         };
         try
         {
@@ -26,7 +27,7 @@ public partial class App : Application
         catch (Exception e)
         {
             Report(e);
-            ShowError(e.ToString());
+            ShowError(e);
             throw;
         }
     }
@@ -44,7 +45,7 @@ public partial class App : Application
         catch (Exception e)
         {
             Report(e);
-            ShowError(e.ToString());
+            ShowError(e);
             throw;
         }
     }
@@ -59,22 +60,13 @@ public partial class App : Application
         catch { }
     }
 
-    private static void Report(Exception exception)
-    {
-        var details = new System.Text.StringBuilder(exception.ToString());
-        details.AppendLine($"HResult: 0x{exception.HResult:X8}");
-        if (exception.InnerException is not null) details.AppendLine($"Inner exception: {exception.InnerException}");
-        foreach (var property in exception.GetType().GetProperties())
-        {
-            try { details.AppendLine($"{property.Name}: {property.GetValue(exception)}"); }
-            catch { }
-        }
-        Log($"STARTUP ERROR: {details}");
-    }
+    // Exception messages may contain imported secrets or personal paths.
+    private static void Report(Exception exception) =>
+        Log($"STARTUP ERROR: {exception.GetType().Name} 0x{exception.HResult:X8}");
 
-    private static void ShowError(string text)
+    private static void ShowError(Exception exception)
     {
-        try { MessageBoxW(IntPtr.Zero, text, "Mono — ошибка запуска", 0x10); }
+        try { MessageBoxW(IntPtr.Zero, $"WinOTP could not continue safely. Your vault files have not been reset. Error: {exception.GetType().Name} (0x{exception.HResult:X8}).", "WinOTP: error", 0x10); }
         catch { }
     }
 

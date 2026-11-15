@@ -7,7 +7,7 @@ namespace Mono.Services;
 public sealed class Vault
 {
     private readonly string _path;
-    public Vault(string? path = null) => _path = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NoirAuth", "vault.bin");
+    public Vault(string? path = null) => _path = path ?? DataPaths.File("vault.bin");
     public List<Account> Load()
     {
         if (!File.Exists(_path)) return [];

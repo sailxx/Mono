@@ -3,38 +3,48 @@ on:
   push:
     tags: ["v*"]
 permissions:
-  contents: write
-  id-token: write
-  attestations: write
+  contents: read
 jobs:
   release:
     runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: microsoft/setup-msbuild@v2
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
       - run: msbuild src/Mono/Mono.csproj /restore /t:Publish /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=true /p:PublishDir=artifacts/publish/ /verbosity:minimal
       - name: Install Inno Setup
         run: choco install innosetup --no-progress
-      - name: Build installer
+      - name: Build installer and checksum
         shell: pwsh
         run: |
           $xaml = @(Get-ChildItem src/Mono/bin/Release -Filter *.xbf -File -Recurse)
           if ($xaml.Count -eq 0) { throw 'No compiled WinUI XAML resources were produced.' }
           Copy-Item -Path $xaml.FullName -Destination src/Mono/artifacts/publish/ -Force
+          if (-not (Test-Path src/Mono/artifacts/publish/WinOTP.exe)) { throw 'Missing WinOTP executable.' }
           $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
           if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler was not installed.' }
           & $compiler installer/Mono.iss
-          if ($LASTEXITCODE -ne 0) { throw 'Inno Setup failed to build Mono-Setup.exe.' }
-      - uses: actions/attest-build-provenance@v2
+          if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+          $hash = (Get-FileHash artifacts/WinOTP-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  WinOTP-Setup.exe" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
-          subject-path: artifacts/Mono-Setup.exe
-      - uses: softprops/action-gh-release@v2
+          subject-path: artifacts/WinOTP-Setup.exe
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           generate_release_notes: true
           prerelease: true
+          fail_on_unmatched_files: true
           files: |
-            artifacts/Mono-Setup.exe
+            artifacts/WinOTP-Setup.exe
+            artifacts/SHA256SUMS.txt

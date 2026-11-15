@@ -1,16 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" fill="none">
-<rect width="1200" height="390" rx="30" fill="#090909"/>
-<rect x="1" y="1" width="1198" height="388" rx="29" stroke="#282828" stroke-width="2"/>
-<rect x="54" y="48" width="42" height="42" rx="13" fill="#FFFFFF"/><path d="M65 77V61h5l5 7 5-7h5v16h-5v-8l-5 6-5-6v8z" fill="#090909"/>
-<text x="112" y="66" fill="#F4F4F4" font-family="Segoe UI,Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="3">MONO</text>
-<text x="112" y="88" fill="#787878" font-family="Segoe UI,Arial,sans-serif" font-size="12" letter-spacing="1.5">OFFLINE AUTHENTICATOR FOR WINDOWS</text>
-<text x="54" y="178" fill="#F2F2F2" font-family="Segoe UI,Arial,sans-serif" font-size="49" font-weight="650">Your codes. Your device.</text>
-<text x="56" y="216" fill="#9D9D9D" font-family="Segoe UI,Arial,sans-serif" font-size="18">A quiet, local-first home for two-factor authentication.</text>
-<g font-family="Segoe UI,Arial,sans-serif" font-size="12" font-weight="600"><rect x="55" y="254" width="112" height="34" rx="17" fill="#141414" stroke="#343434"/><text x="76" y="276" fill="#FFFFFF">WINDOWS 11</text><rect x="177" y="254" width="126" height="34" rx="17" fill="#141414" stroke="#343434"/><text x="199" y="276" fill="#DADADA">DPAPI-ENCRYPTED</text><rect x="313" y="254" width="111" height="34" rx="17" fill="#141414" stroke="#343434"/><text x="336" y="276" fill="#DADADA">NO CLOUD</text></g>
-<rect x="760" y="57" width="383" height="276" rx="22" fill="#0F0F0F" stroke="#282828"/>
-<rect x="785" y="80" width="34" height="34" rx="11" fill="#212121"/><circle cx="802" cy="97" r="6" stroke="#DCDCDC" stroke-width="2"/><text x="833" y="95" fill="#EEEEEE" font-family="Segoe UI,Arial,sans-serif" font-size="14" font-weight="600">GitHub</text><text x="833" y="111" fill="#777777" font-family="Segoe UI,Arial,sans-serif" font-size="11">alex@example.com</text>
-<text x="785" y="182" fill="#F5F5F5" font-family="JetBrains Mono,Cascadia Mono,monospace" font-size="43" letter-spacing="5">482 916</text>
-<rect x="785" y="204" width="333" height="3" rx="2" fill="#232323"/><rect x="785" y="204" width="199" height="3" rx="2" fill="#FFFFFF"/>
-<text x="785" y="240" fill="#757575" font-family="Segoe UI,Arial,sans-serif" font-size="11" letter-spacing="1">NEXT CODE IN 12 SECONDS</text><rect x="1002" y="224" width="116" height="38" rx="11" fill="#1A1A1A"/><text x="1028" y="248" fill="#D6D6D6" font-family="Segoe UI,Arial,sans-serif" font-size="12" font-weight="600">COPY CODE</text>
-<rect x="785" y="280" width="333" height="1" fill="#202020"/><circle cx="794" cy="304" r="3" fill="#FFFFFF"/><text x="805" y="308" fill="#898989" font-family="Segoe UI,Arial,sans-serif" font-size="10" letter-spacing="1">STORED LOCALLY · PROTECTED BY WINDOWS</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360">
+<rect width="1200" height="360" rx="28" fill="#0B0B0B"/>
+<rect x="1" y="1" width="1198" height="358" rx="27" fill="none" stroke="#292929"/>
+<g transform="translate(950 99)" fill="#F2F2F2"><circle cx="0" cy="0" r="16"/><circle cx="52" cy="0" r="16"/><circle cx="104" cy="0" r="16"/><circle cx="0" cy="52" r="16"/><circle cx="52" cy="52" r="16"/><circle cx="104" cy="52" r="16"/><circle cx="0" cy="104" r="16"/><circle cx="52" cy="104" r="16"/><circle cx="104" cy="104" r="16" fill="#4CC2FF"/></g>
+<g font-family="Segoe UI,Arial,sans-serif"><text x="54" y="68" font-size="16" letter-spacing="3" fill="#4CC2FF">WINOTP / WINDOWS AUTHENTICATOR</text><text x="50" y="156" font-size="58" font-weight="600" fill="#F2F2F2">Your codes. Your device.</text><text x="54" y="203" font-size="21" fill="#A8A8A8">Two-factor authentication, without the cloud.</text><g font-size="14" fill="#E4E4E4"><rect x="54" y="257" width="156" height="42" rx="12" fill="#1B1B1B"/><text x="76" y="284">WINDOWS 11</text><rect x="222" y="257" width="164" height="42" rx="12" fill="#1B1B1B"/><text x="244" y="284">LOCAL VAULT</text><rect x="398" y="257" width="174" height="42" rx="12" fill="#1B1B1B"/><text x="420" y="284">TOTP + HOTP</text></g></g></svg>

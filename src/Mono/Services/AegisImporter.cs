@@ -21,7 +21,21 @@ public static class AegisImporter
             if (db.ValueKind == JsonValueKind.String)
             {
                 if (password is null) throw new FormatException("Для этой копии Aegis нужен пароль.");
-                var header = root.GetProperty("header"); var encryptedDb = Convert.FromBase64String(db.GetString()!); var passwordBytes = System.Text.Encoding.UTF8.GetBytes(password); byte[]? master = null;
+                var header = root.GetProperty("header");
+                var slots = header.GetProperty("slots");
+                if (slots.ValueKind != JsonValueKind.Array || slots.GetArrayLength() > 8)
+                    throw new FormatException("Aegis backup exceeds the supported limit of 8 key slots.");
+                long work = 0;
+                foreach (var candidate in slots.EnumerateArray())
+                {
+                    if (!candidate.TryGetProperty("type", out var kind) || kind.GetInt32() != 1) continue;
+                    int n = candidate.GetProperty("n").GetInt32(), r = candidate.GetProperty("r").GetInt32(), p = candidate.GetProperty("p").GetInt32();
+                    if (n is < 16384 or > 32768 || (n & (n - 1)) != 0 || r is < 1 or > 8 || p is < 1 or > 4)
+                        throw new FormatException("Unsupported scrypt parameters.");
+                    work += (long)n * r * p;
+                    if (work > 1_048_576) throw new FormatException("Aegis backup exceeds the total key derivation budget.");
+                }
+                var encryptedDb = Convert.FromBase64String(db.GetString()!); var passwordBytes = System.Text.Encoding.UTF8.GetBytes(password); byte[]? master = null;
                 try
                 {
                     foreach (var slot in header.GetProperty("slots").EnumerateArray())
@@ -45,6 +59,7 @@ public static class AegisImporter
                 using var decrypted = JsonDocument.Parse(plain); db = decrypted.RootElement.Clone();
             }
             if (db.ValueKind != JsonValueKind.Object || !db.TryGetProperty("entries", out var entries) || entries.ValueKind != JsonValueKind.Array) throw new FormatException("Некорректный формат базы Aegis.");
+            if (entries.GetArrayLength() > 500) throw new FormatException("Import supports at most 500 entries.");
             var accounts = new List<Account>();
             foreach (var entry in entries.EnumerateArray())
             {
